@@ -1,0 +1,42 @@
+@using System.Text.Json
+@{
+    var success = TempData["SuccessMessage"] as string;
+    var error = TempData["ErrorMessage"] as string;
+    var warningsJson = TempData["UploadWarnings"] as string;
+    List<string>? warnings = null;
+    if (!string.IsNullOrEmpty(warningsJson))
+    {
+        try { warnings = JsonSerializer.Deserialize<List<string>>(warningsJson); }
+        catch { warnings = new List<string> { warningsJson }; }
+    }
+}
+
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @success
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @error
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (warnings != null && warnings.Count > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Upload warnings:</strong>
+        <ul class="mb-0">
+            @foreach (var w in warnings)
+            {
+                <li>@w</li>
+            }
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}

@@ -1,0 +1,254 @@
+@model MyPhotoBiz.Models.ViewModels.AlbumViewModel
+@{
+    ViewBag.Title = "Album Details";
+    ViewBag.SubTitle = Model.Name;
+}
+
+<div class="container-fluid">
+
+    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-10">
+            
+            <!-- Album Info Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-1">@Model.Name</h4>
+                        <p class="text-muted mb-0">
+                            <i class="ti ti-camera me-1"></i>
+                            <a asp-controller="PhotoShoots" asp-action="Details" asp-route-id="@Model.PhotoShootId" class="link-primary">
+                                @Model.PhotoShootTitle
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <div class="btn-group" role="group">
+                        <a asp-controller="PhotoShoots" asp-action="Details" asp-route-id="@Model.PhotoShootId" 
+                           class="btn btn-light">
+                            <i class="ti ti-arrow-left me-2"></i>Back to Shoot
+                        </a>
+                        
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Photos" asp-action="Upload" asp-route-albumId="@Model.Id" 
+                               class="btn btn-success">
+                                <i class="ti ti-upload me-2"></i>Upload Photos
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@Model.Id" 
+                               class="btn btn-primary">
+                                <i class="ti ti-edit me-2"></i>Edit Album
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-danger" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteAlbumModal">
+                                <i class="ti ti-trash me-2"></i>Delete
+                            </button>
+                        }
+                    </div>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="card-body">
+                        <h6 class="text-muted text-uppercase mb-2">Description</h6>
+                        <p class="mb-0">@Model.Description</p>
+                    </div>
+                }
+                
+                <div class="card-footer bg-light">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="avatar avatar-sm bg-primary-subtle text-primary rounded me-2">
+                                    <i class="ti ti-photo"></i>
+                                </div>
+                                <div class="text-start">
+                                    <h4 class="mb-0">@(Model.Photos?.Count ?? 0)</h4>
+                                    <p class="text-muted small mb-0">Total Photos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="avatar avatar-sm bg-success-subtle text-success rounded me-2">
+                                    <i class="ti ti-check"></i>
+                                </div>
+                                <div class="text-start">
+                                    <h4 class="mb-0">@(Model.Photos?.Count(p => p.IsSelected) ?? 0)</h4>
+                                    <p class="text-muted small mb-0">Selected</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="avatar avatar-sm bg-info-subtle text-info rounded me-2">
+                                    <i class="ti ti-folder"></i>
+                                </div>
+                                <div class="text-start">
+                                    <h4 class="mb-0">@FormatTotalSize(Model.Photos?.Sum(p => p.FileSize) ?? 0)</h4>
+                                    <p class="text-muted small mb-0">Total Size</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Photo Gallery Card -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="ti ti-photo me-2"></i>Photos
+                    </h5>
+                    
+                    @if (Model.Photos != null && Model.Photos.Any())
+                    {
+                        <div class="d-flex gap-2 align-items-center">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary active" id="gridViewBtn">
+                                    <i class="ti ti-layout-grid"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="listViewBtn">
+                                    <i class="ti ti-list"></i>
+                                </button>
+                            </div>
+                            
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">
+                                    <i class="ti ti-checkbox me-1"></i>Select All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger d-none" id="deleteSelectedBtn">
+                                    <i class="ti ti-trash me-1"></i>Delete Selected
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+                
+                <div class="card-body" id="photoGalleryContainer">
+                    @await Html.PartialAsync("~/Views/Photos/_PhotoGallery.cshtml", Model.Photos)
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Delete Album Modal -->
+@if (User.IsInRole("Admin"))
+{
+    <div class="modal fade" id="deleteAlbumModal" tabindex="-1" aria-labelledby="deleteAlbumModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAlbumModalLabel">
+                        <i class="ti ti-alert-triangle text-danger me-2"></i>Delete Album
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to delete the album <strong>"@Model.Name"</strong>?</p>
+                    <div class="alert alert-warning mt-3 mb-0" role="alert">
+                        <i class="ti ti-alert-circle me-2"></i>
+                        <strong>Warning:</strong> This will permanently delete the album and all @(Model.Photos?.Count ?? 0) photos inside it. This action cannot be undone.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ti ti-trash me-2"></i>Delete Album
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    private string FormatTotalSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
+        return $"{bytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
+    }
+}
+
+@section scripts
+{
+    <script>
+        // View toggle functionality
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const listViewBtn = document.getElementById('listViewBtn');
+        const photoGallery = document.getElementById('photoGallery');
+
+        if (gridViewBtn && listViewBtn) {
+            gridViewBtn.addEventListener('click', function() {
+                gridViewBtn.classList.add('active');
+                listViewBtn.classList.remove('active');
+                if (photoGallery) {
+                    photoGallery.classList.remove('list-view');
+                }
+            });
+
+            listViewBtn.addEventListener('click', function() {
+                listViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+                if (photoGallery) {
+                    photoGallery.classList.add('list-view');
+                }
+            });
+        }
+
+        // Select all functionality (for future bulk operations)
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        if (selectAllBtn) {
+            let allSelected = false;
+            selectAllBtn.addEventListener('click', function() {
+                allSelected = !allSelected;
+                // Implement select all logic here when needed
+                this.innerHTML = allSelected 
+                    ? '<i class="ti ti-checkbox me-1"></i>Deselect All'
+                    : '<i class="ti ti-checkbox me-1"></i>Select All';
+            });
+        }
+    </script>
+}
+
+@section styles
+{
+    <style>
+        .list-view {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .list-view .col-xxl-2,
+        .list-view .col-xl-3,
+        .list-view .col-lg-3,
+        .list-view .col-md-4,
+        .list-view .col-sm-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .list-view .photo-card {
+            display: flex;
+            flex-direction: row;
+        }
+        
+        .list-view .photo-thumbnail {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+        }
+    </style>
+}

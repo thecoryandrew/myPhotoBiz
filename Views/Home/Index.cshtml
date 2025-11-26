@@ -1,0 +1,89 @@
+
+@{
+    ViewBag.Title = "Index";
+}
+
+
+@section styles
+{
+}
+
+
+<div class="container-fluid">
+ 
+@{
+    ViewData["Title"] = "Welcome";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to MyPhotoBiz</h1>
+    <p class="lead">Professional Photography Business Management System</p>
+</div>
+
+@if (User.IsInRole("Client"))
+{
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-camera fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">My Photo Shoots</h5>
+                    <p class="card-text">View your scheduled and completed photo shoots</p>
+                    <a asp-controller="PhotoShoots" asp-action="MyPhotoShoots" class="btn btn-primary">View Shoots</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-images fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Photo Albums</h5>
+                    <p class="card-text">Browse and download your photos</p>
+                    <a asp-controller="PhotoShoots" asp-action="MyPhotoShoots" class="btn btn-success">View Albums</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-invoice fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">My Invoices</h5>
+                    <p class="card-text">View and manage your invoices</p>
+                    <a asp-controller="Invoices" asp-action="MyInvoices" class="btn btn-warning">View Invoices</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+ else if (User.Identity == null || !User.Identity.IsAuthenticated)
+    {
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h3>For Photographers</h3>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success"></i> Manage clients and photo shoots</li>
+                <li><i class="fas fa-check text-success"></i> Upload and organize photos</li>
+                <li><i class="fas fa-check text-success"></i> Create and send invoices</li>
+                <li><i class="fas fa-check text-success"></i> Track revenue and analytics</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h3>For Clients</h3>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-primary"></i> View your photo shoots</li>
+                <li><i class="fas fa-check text-primary"></i> Browse and download photos</li>
+                <li><i class="fas fa-check text-primary"></i> Access invoices and payments</li>
+                <li><i class="fas fa-check text-primary"></i> Secure client portal</li>
+            </ul>
+        </div>
+    </div>
+}
+
+
+</div>
+
+
+@section scripts
+{
+}  

@@ -1,0 +1,70 @@
+@page
+@model UserDetailsModel
+@{
+    ViewData["Title"] = "User Details";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+<div class="row">
+    <div class="col-md-6">
+        <form id="profile-form" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FirstName" class="form-control" placeholder="Please enter your first name." />
+                <label asp-for="Input.FirstName" class="form-label"></label>
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.LastName" class="form-control" placeholder="Please enter your last name." />
+                <label asp-for="Input.LastName" class="form-label"></label>
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="Input.IsPhotographer" type="checkbox" class="form-check-input" id="isPhotographer" />
+                <label asp-for="Input.IsPhotographer" class="form-check-label"></label>
+                <span asp-validation-for="Input.IsPhotographer" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <img src="@(string.IsNullOrEmpty(Model.Input.ProfilePictureUrl) ? Url.Content("~/images/users/user-2.jpg") : Model.Input.ProfilePictureUrl)" class="rounded-circle mb-3 img-thumbnail" width="120" alt="Profile" />
+                        <h5 class="mb-0">@Model.Input.FirstName @Model.Input.LastName</h5>
+                        <p class="text-muted">@(Model.Input.IsPhotographer ? "Photographer" : "Client")</p>
+                        <div class="mt-3">
+                            <label asp-for="Input.ProfilePictureFile" class="form-label">Change profile picture</label>
+                            <input asp-for="Input.ProfilePictureFile" type="file" accept="image/*" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Client-side preview for profile picture
+        (function () {
+            const input = document.querySelector('input[type="file"][asp-for$="ProfilePictureFile"]') || document.querySelector('input[name="Input.ProfilePictureFile"]') || document.querySelector('input[name="ProfilePictureFile"]');
+            const img = document.querySelector('img[alt="Profile"]');
+            if (!input || !img) return;
+            input.addEventListener('change', function (ev) {
+                const f = this.files && this.files[0];
+                if (!f) return;
+                if (!f.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; };
+                reader.readAsDataURL(f);
+            });
+        })();
+    </script>
+}

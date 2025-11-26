@@ -1,0 +1,213 @@
+@using MyPhotoBiz.Models
+@model MyPhotoBiz.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
+
+<div class="row mb-4">
+    <!-- Total Clients Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex border-dashed justify-content-between align-items-center">
+                <h5 class="card-title">Clients</h5>
+                <span class="badge badge-soft-primary"> Total</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="avatar fs-60 avatar-img-size flex-shrink-0">
+                        <a href="@Url.Action("Index", "Clients")"
+                            class="avatar-title text-bg-dark rounded-circle fs-32 icon-link">
+                            <span class="avatar-title text-bg-dark rounded-circle fs-32">
+                                <i class="ti ti-users"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="text-end">
+                        <h3 class="mb-2 fw-normal">@Model.TotalClients</h3>
+                        <p class="mb-0 text-muted">New Clients</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end col -->
+    <!-- Monthly Revenue Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex border-dashed justify-content-between align-items-center">
+                <h5 class="card-title">Revenue</h5>
+                <span class="badge badge-soft-primary"> Monthly</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="avatar fs-60 avatar-img-size flex-shrink-0">
+                        <a href="@Url.Action("Index", "Invoices")"
+                            class="avatar-title text-bg-dark rounded-circle fs-32 icon-link">
+                            <span class="avatar-title text-bg-dark rounded-circle fs-32">
+                                <i class="ti ti-cash"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="text-end">
+                        <h3 class="mb-2 fw-normal">@Model.MonthlyRevenue.ToString("C")</span></h3>
+                        <p class="mb-0 text-muted">Monthly Revenue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Shoots Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex border-dashed justify-content-between align-items-center">
+                <h5 class="card-title">Photoshoots</h5>
+                <span class="badge badge-soft-primary"> Upcoming</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="avatar fs-60 avatar-img-size flex-shrink-0">
+                        <a href="@Url.Action("Index", "Photoshoots")" class="avatar-title text-bg-dark rounded-circle fs-32 icon-link">
+                    <span class="avatar-title text-bg-dark rounded-circle fs-32">
+                        <i class="ti ti-camera"></i>
+                    </span>
+                </a>
+                    </div>
+                    <div class="text-end">
+                        <h3 class="mb-2 fw-normal">@Model.UpcomingPhotoshoots</span></h3>
+                        <p class="mb-0 text-muted">Upcoming Shoots</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pending Invoice Amount Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex border-dashed justify-content-between align-items-center">
+                <h5 class="card-title">Pending Revenue</h5>
+                <span class="badge badge-soft-primary"> Outstanding</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="avatar fs-60 avatar-img-size flex-shrink-0">
+                        <a href="@Url.Action("Index", "Invoices")" class="avatar-title text-bg-dark rounded-circle fs-32 icon-link">
+                    <span class="avatar-title text-bg-dark rounded-circle fs-32">
+                        <i class="ti ti-cash"></i>
+                    </span>
+                </a>
+                    </div>
+                    <div class="text-end">
+                        <h3 class="mb-2 fw-normal">@Model.PendingInvoiceAmount.ToString("C")</span></h3>
+                        <p class="mb-0 text-muted">In Outstanding Invoices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <!-- Revenue Overview Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Photo Shoots -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Upcoming Photo Shoots</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentPhotoshoots.Any())
+                    {
+                        foreach (var shoot in Model.RecentPhotoshoots)
+                        {
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-grow-1">
+                                    <div class="small text-gray-500">@shoot.ScheduledDate.ToString("MMM dd, yyyy")</div>
+                                    <div class="font-weight-bold">@shoot.Title</div>
+                                    <div class="small">
+                                        <div>@shoot.Client?.FullName</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span
+                                        class="badge badge-@((PhotoShootStatus)shoot.Status == PhotoShootStatus.Completed ? "success" :
+                                                                                                                                                                                     (PhotoShootStatus)shoot.Status == PhotoShootStatus.Scheduled ? "primary" : "secondary")">@shoot.Status
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No recent photo shoots found.</p>
+                    }
+                    <a asp-controller="PhotoShoots" asp-action="Index" class="btn btn-primary btn-sm">View All
+                        Shoots</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <script>
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyRevenueData.Keys)),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyRevenueData.Values)),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: true, text: 'Monthly Revenue' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+}
+
+@section Styles {
+
+        <style>
+            .icon-link:hover i {
+                color: #7b70ef !important;
+                /* Bootstrap primary blue */
+                transition: color 0.3s ease;
+            }
+
+            .icon-link i {
+                transition: color 0.3s ease;
+            }
+        </style>
+}

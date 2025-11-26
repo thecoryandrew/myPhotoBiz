@@ -1,0 +1,249 @@
+@model IEnumerable<MyPhotoBiz.Models.Photo>
+
+@* Ensure antiforgery token exists on the page for JS POSTs *@
+@Html.AntiForgeryToken()
+
+@if (Model != null && Model.Any())
+{
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllPhotos" />
+                    <label class="form-check-label" for="selectAllPhotos">Select all</label>
+                </div>
+            }
+        </div>
+        <div>
+            @if (User.IsInRole("Admin"))
+            {
+                <button id="deleteSelectedBtn" class="btn btn-sm btn-danger d-none">Delete Selected</button>
+            }
+        </div>
+    </div>
+
+    <div class="row g-3" id="photoGallery" data-album-id="@(Model.FirstOrDefault()?.AlbumId ?? 0)">
+        @foreach (var photo in Model)
+        {
+            <div class="col-xxl-2 col-xl-3 col-lg-3 col-md-4 col-sm-6">
+                <div class="card photo-card h-100">
+                    <div class="position-relative">
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <div class="position-absolute top-0 start-0 p-2">
+                                <input type="checkbox" class="photo-select-checkbox form-check-input" data-photo-id="@photo.Id" />
+                            </div>
+                        }
+                        <a asp-controller="Photos" asp-action="View" asp-route-id="@photo.Id" 
+                           data-lightbox="gallery" 
+                           class="d-block photo-link">
+                            <img src="@Url.Action("View", "Photos", new { id = photo.Id })" 
+                                 class="card-img-top photo-thumbnail" 
+                                 alt="@photo.FileName"
+                                 loading="lazy">
+                        </a>
+                        
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <div class="photo-actions position-absolute top-0 end-0 p-2">
+                                <div class="btn-group-vertical" role="group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger btn-icon rounded-circle mb-1" 
+                                            onclick="deletePhoto(@photo.Id, '@photo.FileName')"
+                                            title="Delete">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (photo.IsSelected)
+                        {
+                            <div class="position-absolute top-0 start-0 p-2">
+                                <span class="badge bg-success">
+                                    <i class="ti ti-check"></i> Selected
+                                </span>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="card-body p-2">
+                        <p class="text-muted small mb-0 text-truncate" title="@photo.FileName">
+                            @photo.FileName
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">@FormatFileSize(photo.FileSize)</small>
+                            <small class="text-muted">@photo.UploadDate.ToString("MMM dd, yyyy")</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="ti ti-photo-off fs-1 text-muted mb-3 d-block"></i>
+        <h5 class="text-muted">No photos uploaded yet</h5>
+        @if (User.IsInRole("Admin"))
+        {
+            <p class="text-muted">Upload your first photos to get started</p>
+        }
+    </div>
+}
+
+@functions {
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+}
+
+<style>
+    .photo-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .photo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .photo-thumbnail {
+        height: 200px;
+        object-fit: cover;
+        cursor: pointer;
+    }
+    
+    .photo-actions {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .photo-card:hover .photo-actions {
+        opacity: 1;
+    }
+    
+    .photo-link {
+        overflow: hidden;
+        display: block;
+    }
+    
+    .photo-link img {
+        transition: transform 0.3s ease;
+    }
+    
+    .photo-link:hover img {
+        transform: scale(1.1);
+    }
+</style>
+
+<script>
+    function deletePhoto(photoId, fileName) {
+        if (confirm(`Are you sure you want to delete "${fileName}"?`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Photos/Delete/' + photoId;
+            
+            const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (antiforgeryToken) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = antiforgeryToken.value;
+                form.appendChild(tokenInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Initialize lightbox gallery (if using a lightbox library)
+    document.addEventListener('DOMContentLoaded', function() {
+        const photoLinks = document.querySelectorAll('[data-lightbox="gallery"]');
+        photoLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Open in new window as simple lightbox alternative
+                window.open(this.href, 'Photo View', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+            });
+        });
+
+        // Selection controls
+        const selectAll = document.getElementById('selectAllPhotos');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const gallery = document.getElementById('photoGallery');
+
+        function updateDeleteButtonVisibility() {
+            const anyChecked = document.querySelectorAll('.photo-select-checkbox:checked').length > 0;
+            if (deleteSelectedBtn) deleteSelectedBtn.classList.toggle('d-none', !anyChecked);
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                const checkboxes = document.querySelectorAll('.photo-select-checkbox');
+                checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                updateDeleteButtonVisibility();
+            });
+        }
+
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.classList && e.target.classList.contains('photo-select-checkbox')) {
+                const total = document.querySelectorAll('.photo-select-checkbox').length;
+                const checked = document.querySelectorAll('.photo-select-checkbox:checked').length;
+                if (selectAll) selectAll.checked = (total > 0 && total === checked);
+                updateDeleteButtonVisibility();
+            }
+        });
+
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const checkedBoxes = Array.from(document.querySelectorAll('.photo-select-checkbox:checked'));
+                if (checkedBoxes.length === 0) return;
+                if (!confirm(`Delete ${checkedBoxes.length} selected photo(s)? This cannot be undone.`)) return;
+
+                // build form and submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Photos/BulkDelete';
+
+                // antiforgery
+                const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiforgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiforgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+
+                // albumId
+                const albumId = gallery ? gallery.getAttribute('data-album-id') : null;
+                if (albumId) {
+                    const albumInput = document.createElement('input');
+                    albumInput.type = 'hidden';
+                    albumInput.name = 'albumId';
+                    albumInput.value = albumId;
+                    form.appendChild(albumInput);
+                }
+
+                checkedBoxes.forEach((cb, idx) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'photoIds';
+                    input.value = cb.getAttribute('data-photo-id');
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+    });
+</script>

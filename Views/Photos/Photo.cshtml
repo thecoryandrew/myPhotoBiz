@@ -1,0 +1,158 @@
+@model MyPhotoBiz.Models.Photo
+@{
+    ViewBag.Title = "View Photo";
+    ViewBag.SubTitle = Model.FileName;
+}
+
+<div class="container-fluid">
+
+    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">@Model.FileName</h5>
+                        <p class="text-muted small mb-0">
+                            <i class="ti ti-calendar me-1"></i>
+                            Uploaded on @Model.UploadDate.ToString("MMMM dd, yyyy 'at' h:mm tt")
+                        </p>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <a asp-controller="Albums" asp-action="Details" asp-route-id="@Model.AlbumId" 
+                           class="btn btn-light">
+                            <i class="ti ti-arrow-left me-2"></i>Back to Album
+                        </a>
+                        <a href="@Url.Action("View", "Photos", new { id = Model.Id })" 
+                           download="@Model.FileName" 
+                           class="btn btn-primary">
+                            <i class="ti ti-download me-2"></i>Download
+                        </a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <button type="button" 
+                                    class="btn btn-danger" 
+                                    onclick="deletePhoto(@Model.Id, '@Model.FileName', @Model.AlbumId)">
+                                <i class="ti ti-trash me-2"></i>Delete
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="text-center bg-dark">
+                        <img src="@Url.Action("View", "Photos", new { id = Model.Id })" 
+                             class="img-fluid" 
+                             alt="@Model.FileName"
+                             style="max-height: 80vh; width: auto;">
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-primary-subtle text-primary rounded me-2">
+                                    <i class="ti ti-file"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small mb-0">File Size</p>
+                                    <p class="mb-0 fw-semibold">@FormatFileSize(Model.FileSize)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-info-subtle text-info rounded me-2">
+                                    <i class="ti ti-photo"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small mb-0">Album</p>
+                                    <p class="mb-0 fw-semibold">
+                                        <a asp-controller="Albums" asp-action="Details" asp-route-id="@Model.AlbumId" class="link-primary">
+                                            @Model.Album.Name
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-success-subtle text-success rounded me-2">
+                                    <i class="ti ti-user"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small mb-0">Client</p>
+                                    <p class="mb-0 fw-semibold">
+                                        @Model.Album.PhotoShoot.Client.FirstName @Model.Album.PhotoShoot.Client.LastName
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-warning-subtle text-warning rounded me-2">
+                                    <i class="ti ti-camera"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small mb-0">Photo Shoot</p>
+                                    <p class="mb-0 fw-semibold">@Model.Album.PhotoShoot.Title</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="mt-3">
+                            <p class="text-muted small mb-1">Description</p>
+                            <p class="mb-0">@Model.Description</p>
+                        </div>
+                    }
+                    
+                    @if (Model.IsSelected)
+                    {
+                        <div class="alert alert-success mt-3 mb-0" role="alert">
+                            <i class="ti ti-check-circle me-2"></i>
+                            This photo has been selected by the client
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@functions {
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+}
+
+@section scripts
+{
+    <script>
+        function deletePhoto(photoId, fileName, albumId) {
+            if (confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Photos/Delete/' + photoId;
+                
+                const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiforgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiforgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}

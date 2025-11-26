@@ -1,0 +1,320 @@
+@model MyPhotoBiz.Models.ViewModels.CreateInvoiceViewModel;
+@{
+    ViewBag.Title = "Create Invoice";
+    ViewBag.SubTitle = "Invoices";
+}
+
+@section Styles {
+    <link href="@Url.Content("~/css/simple-searchable-select.css")" rel="stylesheet" />
+}
+
+<div class="container-fluid">
+    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-10">
+            <div class="row">
+                <div class="col-xl-9">
+                    <div class="card">
+                        @using (Html.BeginForm("Create", "Invoices", FormMethod.Post, new { id = "invoiceForm", enctype = "multipart/form-data" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <div class="card-body p-4">
+
+                                <!-- Invoice Number, Dates -->
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label asp-for="InvoiceNumber" class="form-label"></label>
+                                        <input asp-for="InvoiceNumber" class="form-control" placeholder="INV-0001" />
+                                        <span asp-validation-for="InvoiceNumber" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="InvoiceDate" class="form-label"></label>
+                                        <input asp-for="InvoiceDate" class="form-control" data-provider="flatpickr" />
+                                        <span asp-validation-for="InvoiceDate" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="DueDate" class="form-label"></label>
+                                        <input asp-for="DueDate" class="form-control" data-provider="flatpickr" />
+                                        <span asp-validation-for="DueDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Client Info -->
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <label asp-for="ClientId" class="form-label">Client</label>
+                                        <div class="d-flex gap-1 align-items-start">
+                                            <div class="flex-grow-1">
+                                                @Html.DropDownListFor(m => m.ClientId, (IEnumerable<SelectListItem>)ViewBag.ClientId, "Select Client", new { @class = "form-select", id = "existingClient" })
+                                            </div>
+                                            <button type="button" class="btn btn-primary" id="newClientBtn">New</button>
+                                        </div>
+                                        <span asp-validation-for="ClientId" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <!-- New Client Form (initially hidden) -->
+                                <div class="row mb-3" id="newClientForm" style="display: none;">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Client Name</label>
+                                        <input asp-for="ClientName" class="form-control" />
+                                        <span asp-validation-for="ClientName" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Client Email</label>
+                                        <input asp-for="ClientEmail" class="form-control" />
+                                        <span asp-validation-for="ClientEmail" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <!-- PhotoShoot -->
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                            <label asp-for="PhotoShootId" class="form-label">Photo Shoot</label>
+                                            @{
+                                                var shoots = ViewBag.PhotoShootList as IEnumerable<MyPhotoBiz.Models.PhotoShoot>;
+                                            }
+                                            <select asp-for="PhotoShootId" class="form-select" id="photoShootSelect">
+                                                <option value="">Select Shoot</option>
+                                                @if (shoots != null)
+                                                {
+                                                    foreach (var s in shoots)
+                                                    {
+                                                        <option value="@s.Id" data-client-id="@s.ClientId">@s.Title</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <span asp-validation-for="PhotoShootId" class="text-danger"></span>
+                                        </div>
+                                </div>
+
+                                <!-- Invoice Items -->
+                                <div class="table-responsive mt-4">
+                                    <table class="table table-bordered text-center align-middle">
+                                        <thead class="bg-light">
+                                            <tr class="text-uppercase fs-xxs">
+                                                <th>#</th>
+                                                <th>Description</th>
+                                                <th>Qty</th>
+                                                <th>Unit Price</th>
+                                                <th>Total</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="invoice-items">
+                                            @for (int i = 0; i < Model.InvoiceItems.Count; i++)
+                                            {
+                                                <tr>
+                                                    <td>@(i + 1)</td>
+                                                    <td>@Html.TextBoxFor(m => m.InvoiceItems[i].Description, new { @class = "form-control" })</td>
+                                                    <td>@Html.TextBoxFor(m => m.InvoiceItems[i].Quantity, new { @class = "form-control", type = "number" })</td>
+                                                    <td>@Html.TextBoxFor(m => m.InvoiceItems[i].UnitPrice, new { @class = "form-control", type = "number", step = "0.01" })</td>
+                                                    <td><span>@Model.InvoiceItems[i].Total.ToString("C")</span></td>
+                                                    <td><button type="button" class="btn btn-sm btn-danger remove-item">×</button></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-primary" id="add-item"><i class="ti ti-plus"></i> Add Item</button>
+                                </div>
+
+                                <!-- Totals -->
+                                <div class="row justify-content-end mt-4">
+                                    <div class="col-md-4">
+                                        <table class="table table-borderless">
+                                            <tr>
+                                                <td class="text-end">Amount</td>
+                                                <td>@Html.TextBoxFor(m => m.Amount, new { @class = "form-control", type = "number", step = "0.01" })</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-end">Tax</td>
+                                                <td>@Html.TextBoxFor(m => m.Tax, new { @class = "form-control", type = "number", step = "0.01" })</td>
+                                            </tr>
+                                            <tr class="fw-bold">
+                                                <td class="text-end">Total</td>
+                                                <td><input type="text" class="form-control" value="@Model.TotalAmount" readonly /></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Notes -->
+                                <div class="mt-4">
+                                    <label asp-for="Notes" class="form-label"></label>
+                                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                                    <span asp-validation-for="Notes" class="text-danger"></span>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="mt-4 d-flex gap-2">
+                                    <button type="submit" class="btn btn-success" name="action" value="save"><i class="ti ti-save me-1"></i> Save</button>
+                                    <button type="submit" class="btn btn-danger" name="action" value="send"><i class="ti ti-send me-1"></i> Send</button>
+                                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-xl-3 d-print-none">
+                    <div class="card card-top-sticky">
+                        <div class="card-body">
+                            <div class="d-flex flex-column gap-2">
+                                <button type="button" class="btn btn-light" id="previewInvoice"><i class="ti ti-eye me-1"></i> Preview</button>
+                                <button type="button" class="btn btn-light" id="downloadInvoice"><i class="ti ti-download me-1"></i> Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- row -->
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script src="@Url.Content("~/js/simple-searchable-select.js")"></script>
+
+    <script>
+        // Calculate totals for invoice items
+        function recalcTotals() {
+            let subtotal = 0;
+            document.querySelectorAll("#invoice-items tr").forEach((tr, index) => {
+                const qty = parseFloat(tr.querySelector("[name*='Quantity']").value) || 0;
+                const price = parseFloat(tr.querySelector("[name*='UnitPrice']").value) || 0;
+                const total = qty * price;
+                subtotal += total;
+                tr.querySelector("td:nth-last-child(2) span").textContent = total.toFixed(2);
+                tr.querySelector("td:first-child").textContent = index + 1;
+            });
+            
+            // Set the amount field to the sum of items
+            document.getElementById("Amount").value = subtotal.toFixed(2);
+            
+            // Calculate total (amount + tax) without adding tax twice
+            const amount = parseFloat(document.getElementById("Amount").value) || 0;
+            const tax = parseFloat(document.getElementById("Tax").value) || 0;
+            const total = amount + tax;
+            
+            // Use a more reliable selector for the readonly total field
+            document.querySelector("tr.fw-bold input[readonly]").value = total.toFixed(2);
+        }
+
+        // Add new invoice item
+        document.getElementById("add-item").addEventListener("click", () => {
+            const tbody = document.getElementById("invoice-items");
+            const newIndex = tbody.children.length;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${newIndex + 1}</td>
+                <td><input name="InvoiceItems[${newIndex}].Description" class="form-control" type="text" /></td>
+                <td><input name="InvoiceItems[${newIndex}].Quantity" class="form-control" type="number" value="1" /></td>
+                <td><input name="InvoiceItems[${newIndex}].UnitPrice" class="form-control" type="number" step="0.01" value="0.00" /></td>
+                <td><span>0.00</span></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-item">×</button></td>
+            `;
+            tbody.appendChild(tr);
+            recalcTotals();
+        });
+
+        // Remove invoice item
+        document.getElementById("invoice-items").addEventListener("click", e => {
+            if (e.target.matches(".remove-item")) {
+                e.target.closest("tr").remove();
+                recalcTotals();
+            }
+        });
+
+        // Watch for input changes
+        document.addEventListener("input", e => {
+            if (e.target.matches("[name*='Quantity'], [name*='UnitPrice'], #Tax")) {
+                recalcTotals();
+            }
+        });
+
+        // Client selection handling
+        const existingClientSelect = document.getElementById("existingClient");
+        const newClientBtn = document.getElementById("newClientBtn");
+        const newClientForm = document.getElementById("newClientForm");
+        const clientNameInput = document.querySelector("[name='ClientName']");
+        const clientEmailInput = document.querySelector("[name='ClientEmail']");
+        const photoShootSelect = document.getElementById("photoShootSelect");
+
+        // Filter photo shoots to those that belong to the selected client
+        function filterPhotoShootsByClient(clientId) {
+            if (!photoShootSelect) return;
+            for (const opt of photoShootSelect.options) {
+                const optClient = opt.getAttribute('data-client-id');
+                // always keep the placeholder option
+                if (!opt.value) { opt.hidden = false; opt.style.display = ''; continue; }
+                if (!clientId) {
+                    // no client selected: show all shoots
+                    opt.hidden = false; opt.style.display = '';
+                } else {
+                    if (optClient === clientId.toString()) {
+                        opt.hidden = false; opt.style.display = '';
+                    } else {
+                        opt.hidden = true; opt.style.display = 'none';
+                    }
+                }
+            }
+            // If none of the visible options is selected, clear selection
+            if (photoShootSelect.selectedIndex <= 0 || photoShootSelect.options[photoShootSelect.selectedIndex].hidden) {
+                photoShootSelect.value = "";
+            }
+        }
+
+        newClientBtn.addEventListener("click", () => {
+            existingClientSelect.value = "";
+            existingClientSelect.disabled = true;
+            newClientForm.style.display = "flex";
+            newClientBtn.style.display = "none";
+            // new client - photo shoots should be hidden (no shoots yet)
+            filterPhotoShootsByClient(null);
+        });
+        existingClientSelect.addEventListener("change", () => {
+            if (existingClientSelect.value) {
+                newClientForm.style.display = "none";
+                clientNameInput.value = "";
+                clientEmailInput.value = "";
+                filterPhotoShootsByClient(existingClientSelect.value);
+            }
+        });
+
+        // Note: client searching is handled by Tom Select (searchable select)
+
+        // Form validation
+        document.getElementById("invoiceForm").addEventListener("submit", e => {
+            const items = document.querySelectorAll("#invoice-items tr");
+            if (items.length === 0) {
+                e.preventDefault();
+                alert("Please add at least one item to the invoice");
+                return;
+            }
+
+            if (!existingClientSelect.value && (!clientNameInput.value || !clientEmailInput.value)) {
+                e.preventDefault();
+                alert("Please select an existing client or provide new client details");
+                return;
+            }
+        });
+
+        // Preview invoice 
+        document.getElementById("previewInvoice").addEventListener("click", () => {
+            const formData = new FormData(document.getElementById("invoiceForm"));
+            formData.append("preview", "true");
+            window.open("@Url.Action("Preview", "Invoices")?id=" + encodeURIComponent(document.getElementById("InvoiceNumber").value) + 
+                "&amount=" + encodeURIComponent(document.getElementById("Amount").value) + 
+                "&tax=" + encodeURIComponent(document.getElementById("Tax").value));
+        });
+
+        // Download invoice
+        document.getElementById("downloadInvoice").addEventListener("click", () => {
+            const formData = new FormData(document.getElementById("invoiceForm"));
+            formData.append("download", "true"); 
+            window.location.href = "@Url.Action("Download", "Invoices")?id=" + encodeURIComponent(document.getElementById("InvoiceNumber").value);
+        });
+    </script>
+}

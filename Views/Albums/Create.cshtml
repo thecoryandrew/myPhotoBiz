@@ -1,0 +1,158 @@
+@model MyPhotoBiz.Models.ViewModels.AlbumViewModel
+@{
+    ViewBag.Title = "Create Album";
+    ViewBag.SubTitle = ViewBag.PhotoShootTitle;
+}
+
+<div class="container-fluid">
+
+    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ti ti-folder-plus me-2"></i>Create New Album
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <input type="hidden" asp-for="PhotoShootId" />
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Photo Shoot Info -->
+                        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                            <i class="ti ti-camera fs-4 me-3"></i>
+                            <div>
+                                <h6 class="mb-1">Photo Shoot</h6>
+                                <p class="mb-0">@ViewBag.PhotoShootTitle</p>
+                            </div>
+                        </div>
+
+                        <!-- Album Name -->
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label">
+                                Album Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" class="form-control" placeholder="e.g., Wedding Ceremony, Portrait Session, etc." />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="ti ti-info-circle me-1"></i>
+                                Choose a descriptive name for this album
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label">
+                                Description
+                            </label>
+                            <textarea asp-for="Description" 
+                                      class="form-control" 
+                                      rows="4" 
+                                      placeholder="Add details about this album, location, or special notes..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="ti ti-info-circle me-1"></i>
+                                Optional: Add context or notes about this album
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="alert alert-light border" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="ti ti-bulb me-2"></i>What's Next?
+                            </h6>
+                            <p class="mb-0">After creating the album, you'll be able to upload photos to it from the photo shoot details page or album details page.</p>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between pt-3">
+                            <a asp-controller="PhotoShoots" asp-action="Details" asp-route-id="@Model.PhotoShootId" class="btn btn-light">
+                                <i class="ti ti-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="ti ti-check me-2"></i>Create Album
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-primary-subtle">
+                    <h6 class="card-title mb-0 text-primary">
+                        <i class="ti ti-lightbulb me-2"></i>Album Organization Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-3">
+                                <div class="avatar avatar-sm bg-info-subtle text-info rounded flex-shrink-0">
+                                    <i class="ti ti-tag"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Use Descriptive Names</h6>
+                                    <p class="text-muted small mb-0">Name albums by event, location, or time to make them easy to find</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-3">
+                                <div class="avatar avatar-sm bg-success-subtle text-success rounded flex-shrink-0">
+                                    <i class="ti ti-folders"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Organize by Category</h6>
+                                    <p class="text-muted small mb-0">Create separate albums for different parts of the shoot</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-3">
+                                <div class="avatar avatar-sm bg-warning-subtle text-warning rounded flex-shrink-0">
+                                    <i class="ti ti-notes"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Add Context</h6>
+                                    <p class="text-muted small mb-0">Use descriptions to note important details or special requirements</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-3">
+                                <div class="avatar avatar-sm bg-danger-subtle text-danger rounded flex-shrink-0">
+                                    <i class="ti ti-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Plan Ahead</h6>
+                                    <p class="text-muted small mb-0">Create albums before the shoot to stay organized during uploads</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Auto-focus on album name input
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.querySelector('input[name="Name"]');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        });
+    </script>
+}

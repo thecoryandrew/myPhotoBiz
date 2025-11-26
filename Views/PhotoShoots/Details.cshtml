@@ -1,0 +1,99 @@
+@using MyPhotoBiz.Models;
+
+@model PhotoShoot
+@{
+    ViewData["Title"] = "Photo Shoot Details";
+}
+
+<div class="container-fluid">
+   @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>@Model.Title</h4>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="btn-group">
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a asp-controller="Albums" asp-action="Create" asp-route-photoShootId="@Model.Id" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus"></i> Add Album
+                            </a>
+                        </div>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Client:</strong></div>
+                        <div class="col-sm-9">@Model.Client.FirstName @Model.Client.LastName</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Scheduled Date:</strong></div>
+                        <div class="col-sm-9">@Model.ScheduledDate.ToString("MMM dd, yyyy HH:mm")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Duration:</strong></div>
+                        <div class="col-sm-9">@Model.DurationHours hours</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Location:</strong></div>
+                        <div class="col-sm-9">@Model.Location</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Status:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge badge-@(Model.Status == PhotoShootStatus.Completed ? "success" : Model.Status == PhotoShootStatus.Scheduled ? "primary" : Model.Status == PhotoShootStatus.InProgress ? "warning" : "secondary")">
+                                @Model.Status
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Price:</strong></div>
+                        <div class="col-sm-9">@Model.Price.ToString("C")</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-sm-3"><strong>Description:</strong></div>
+                            <div class="col-sm-9">@Model.Description</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Albums</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Albums.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var album in Model.Albums)
+                        {
+                            <a asp-controller="Albums" asp-action="Details" asp-route-id="@album.Id" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@album.Name</h6>
+                                    <small>@album.Photos.Count photos</small>
+                                </div>
+                                @if (!string.IsNullOrEmpty(album.Description))
+                                {
+                                    <p class="mb-1">@album.Description</p>
+                                }
+                                <small>Created @album.CreatedDate.ToString("MMM dd, yyyy")</small>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No albums created yet.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+</div>

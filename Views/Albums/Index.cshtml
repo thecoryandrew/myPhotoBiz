@@ -1,0 +1,186 @@
+@model IEnumerable<MyPhotoBiz.Models.Album>
+@{
+    ViewBag.Title = "Albums";
+    ViewBag.SubTitle = "Index";
+}
+
+<div class="container-fluid">
+
+    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-10">
+            <div data-table data-table-rows-per-page="10" class="card">
+                <div class="card-header border-light justify-content-between">
+                    <div class="d-flex gap-2">
+                        <div class="app-search">
+                            <input data-table-search type="text" class="form-control" placeholder="Search albums...">
+                            <i data-lucide="search" class="app-search-icon text-muted"></i>
+                        </div>
+
+                        <button data-table-delete-selected class="btn btn-danger d-none">Delete</button>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="me-2 fw-semibold">Show:</span>
+
+                        <!-- Records Per Page -->
+                        <div>
+                            <select data-table-set-rows-per-page class="form-select form-control my-1 my-md-0">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="15">15</option>
+                                <option value="20">20</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-custom table-centered table-select table-hover w-100 mb-0">
+                        <thead class="bg-light bg-opacity-25 thead-sm">
+                            <tr class="text-uppercase fs-xxs">
+                                <th scope="col" style="width: 1%;">
+                                    <input data-table-select-all class="form-check-input form-check-input-light fs-14 mt-0" type="checkbox" id="checkAll">
+                                </th>
+                                <th data-table-sort="name">Album Name</th>
+                                <th data-table-sort>Photo Shoot</th>
+                                <th data-table-sort>Client</th>
+                                <th data-table-sort>Photos</th>
+                                <th data-table-sort>Created Date</th>
+                                <th data-table-sort>Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var album in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <input class="form-check-input form-check-input-light fs-14 mt-0" type="checkbox" value="@album.Id">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-start align-items-center gap-2">
+                                            <div class="avatar avatar-sm">
+                                                <span class="avatar-title bg-purple-subtle text-purple rounded-circle">
+                                                    <i class="ti ti-folder"></i>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <h5 class="text-nowrap mb-0 lh-base fs-base">
+                                                    <a data-sort="name" asp-action="Details" asp-route-id="@album.Id" class="link-reset">
+                                                        @album.Name
+                                                    </a>
+                                                </h5>
+                                                <p class="text-muted fs-xs mb-0">
+                                                    @(string.IsNullOrEmpty(album.Description) ? "No description" : 
+                                                      (album.Description.Length > 50 ? album.Description.Substring(0, 50) + "..." : album.Description))
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="PhotoShoots" asp-action="Details" asp-route-id="@album.PhotoShootId" class="link-primary">
+                                            @album.PhotoShoot.Title
+                                        </a>
+                                    </td>
+                                    <td>@album.Client.FirstName @album.Client.LastName</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-primary-subtle text-primary">
+                                                @album.Photos.Count photos
+                                            </span>
+                                            @if (album.Photos.Any(p => p.IsSelected))
+                                            {
+                                                <span class="badge bg-success-subtle text-success">
+                                                    @album.Photos.Count(p => p.IsSelected) selected
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>@album.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (album.IsPublic)
+                                        {
+                                            <span class="badge badge-success">
+                                                <i class="ti ti-world me-1"></i>Public
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary">
+                                                <i class="ti ti-lock me-1"></i>Private
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <a asp-action="Details" asp-route-id="@album.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="View Details">
+                                                <i class="ti ti-eye fs-lg"></i>
+                                            </a>
+                                            @if (User.IsInRole("Admin"))
+                                            {
+                                                <a asp-controller="Photos" asp-action="Upload" asp-route-albumId="@album.Id" class="btn btn-success btn-icon btn-sm rounded-circle" title="Upload Photos">
+                                                    <i class="ti ti-upload fs-lg"></i>
+                                                </a>
+                                                <a asp-action="Edit" asp-route-id="@album.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Edit">
+                                                    <i class="ti ti-edit fs-lg"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-light btn-icon btn-sm rounded-circle" 
+                                                        title="Delete"
+                                                        onclick="deleteAlbum(@album.Id, '@album.Name', @album.Photos.Count)">
+                                                    <i class="ti ti-trash fs-lg"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-footer border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div data-table-pagination-info="albums"></div>
+                        <div data-table-pagination></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section scripts
+{
+    <!-- Custom table -->
+    <script src="~/js/pages/custom-table.js"></script>
+    
+    <script>
+        function deleteAlbum(albumId, albumName, photoCount) {
+            const message = photoCount > 0 
+                ? `Are you sure you want to delete "${albumName}"? This will permanently delete the album and all ${photoCount} photos inside it. This action cannot be undone.`
+                : `Are you sure you want to delete "${albumName}"?`;
+            
+            if (confirm(message)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Albums/Delete/' + albumId;
+                
+                const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiforgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiforgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}

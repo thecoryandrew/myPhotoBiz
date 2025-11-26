@@ -1,0 +1,47 @@
+@{
+    var success = TempData["SuccessMessage"] as string;
+    var warning = TempData["WarningMessage"] as string;
+    var error = TempData["ErrorMessage"] as string;
+}
+
+<div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <div id="toast-container">
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="toast align-items-center text-bg-success border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">@success</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(warning))
+        {
+            <div class="toast align-items-center text-bg-warning border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">@warning</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="toast align-items-center text-bg-danger border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">@error</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+        toastElList.forEach(function (toastEl) {
+            var toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+            toast.show();
+        });
+    });
+</script>

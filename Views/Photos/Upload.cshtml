@@ -1,0 +1,117 @@
+@{
+    ViewBag.Title = "Upload Photos";
+}
+
+<div class="container-fluid">
+    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upload Photos to Album</h5>
+                </div>
+                <div class="card-body">
+                    <form id="uploadDropzoneForm" asp-action="Upload" asp-controller="Photos" asp-route-albumId="@ViewBag.AlbumId" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Drag & drop photos here or click to select</label>
+                                @if (TempData["UploadWarnings"] != null)
+                                {
+                                    var warningsJson = TempData["UploadWarnings"] as string;
+                                    if (!string.IsNullOrEmpty(warningsJson))
+                                    {
+                                        var warnings = System.Text.Json.JsonSerializer.Deserialize<List<string>>(warningsJson);
+                                        if (warnings != null && warnings.Count > 0)
+                                        {
+                                            <div class="alert alert-warning" role="alert">
+                                                <strong>Some files were skipped:</strong>
+                                                <ul>
+                                                    @foreach (var w in warnings)
+                                                    {
+                                                        <li>@w</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            <div id="dropzoneArea" class="border border-dashed rounded p-4 text-center">
+                                <input type="file" name="files" id="files" multiple accept="image/*" class="form-control d-none" />
+                                <p class="mb-0">Drop files or <a href="#" id="browseFiles">browse</a></p>
+                                <small class="text-muted d-block">Supported: JPG, PNG. Max size per file: 20MB</small>
+                            </div>
+                        </div>
+
+                        <div id="preview" class="row g-2 mb-3"></div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">Upload</button>
+                            <a asp-controller="Albums" asp-action="Details" asp-route-id="@ViewBag.AlbumId" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        (function () {
+            const input = document.getElementById('files');
+            const preview = document.getElementById('preview');
+            const dropzone = document.getElementById('dropzoneArea');
+            const browse = document.getElementById('browseFiles');
+
+            function renderPreviews(files) {
+                preview.innerHTML = '';
+                files.forEach(file => {
+                    if (!file.type.startsWith('image/')) return;
+                    const col = document.createElement('div');
+                    col.className = 'col-3';
+                    const img = document.createElement('img');
+                    img.className = 'img-fluid rounded';
+                    img.style.height = '120px';
+                    img.style.objectFit = 'cover';
+                    const reader = new FileReader();
+                    reader.onload = e => img.src = e.target.result;
+                    reader.readAsDataURL(file);
+                    col.appendChild(img);
+                    preview.appendChild(col);
+                });
+            }
+
+            if (browse) {
+                browse.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    input.click();
+                });
+            }
+
+            if (input) {
+                input.addEventListener('change', function () {
+                    const files = Array.from(this.files || []);
+                    renderPreviews(files);
+                });
+            }
+
+            // Drag & drop handlers
+            if (dropzone) {
+                dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('bg-light'); });
+                dropzone.addEventListener('dragleave', function (e) { e.preventDefault(); dropzone.classList.remove('bg-light'); });
+                dropzone.addEventListener('drop', function (e) {
+                    e.preventDefault(); dropzone.classList.remove('bg-light');
+                    const dt = e.dataTransfer;
+                    if (!dt) return;
+                    const files = Array.from(dt.files || []);
+                    // populate input.files via DataTransfer (for form submit fallback)
+                    const dataTransfer = new DataTransfer();
+                    files.forEach(f => dataTransfer.items.add(f));
+                    input.files = dataTransfer.files;
+                    renderPreviews(files);
+                });
+            }
+        })();
+    </script>
+}
