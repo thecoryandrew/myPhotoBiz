@@ -558,6 +558,32 @@ namespace myPhotoBiz.Migrations
                     b.ToTable("InvoiceItems");
                 });
 
+            modelBuilder.Entity("MyPhotoBiz.Models.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permissions");
+                });
+
             modelBuilder.Entity("MyPhotoBiz.Models.Photo", b =>
                 {
                     b.Property<int>("Id")
@@ -844,6 +870,34 @@ namespace myPhotoBiz.Migrations
                     b.ToTable("Proofs");
                 });
 
+            modelBuilder.Entity("MyPhotoBiz.Models.RolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PermissionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId", "Permission")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RolePermissions_RoleId_Permission");
+
+                    b.ToTable("RolePermissions", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1046,6 +1100,13 @@ namespace myPhotoBiz.Migrations
                     b.Navigation("Session");
                 });
 
+            modelBuilder.Entity("MyPhotoBiz.Models.RolePermission", b =>
+                {
+                    b.HasOne("MyPhotoBiz.Models.Permission", null)
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId");
+                });
+
             modelBuilder.Entity("MyPhotoBiz.Models.Album", b =>
                 {
                     b.Navigation("Photos");
@@ -1073,6 +1134,11 @@ namespace myPhotoBiz.Migrations
             modelBuilder.Entity("MyPhotoBiz.Models.Invoice", b =>
                 {
                     b.Navigation("InvoiceItems");
+                });
+
+            modelBuilder.Entity("MyPhotoBiz.Models.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
                 });
 
             modelBuilder.Entity("MyPhotoBiz.Models.Photo", b =>

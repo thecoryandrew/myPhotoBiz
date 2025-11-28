@@ -1,0 +1,53 @@
+@model MyPhotoBiz.ViewModels.PermissionDetailsViewModel
+
+<div class="modal fade" id="detailsPermissionModal" tabindex="-1" role="dialog" aria-labelledby="detailsPermissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsPermissionModalLabel">Permission Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="permissionName" class="form-label">Permission Name</label>
+                    <input type="text" class="form-control" id="permissionName" value="@Model.Name" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label for="permissionDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="permissionDescription" rows="3" readonly>@Model.Description</textarea>
+                </div>
+
+                @if (Model?.AssignedRoles?.Any() == true)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Assigned Roles</label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            @foreach (var role in Model.AssignedRoles)
+                            {
+                                <div>
+                                    <strong>@role</strong>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <p>No roles assigned.</p>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // Any additional JS for handling the modal can go here, if needed
+    })();
+</script>

@@ -14,7 +14,6 @@ using System.IO;
 
 namespace MyPhotoBiz.Controllers
 {
-    [Authorize(Roles = "Administrator")]
     public class RolesController : Controller
     {
         private readonly IRolesService _rolesService;
@@ -114,22 +113,23 @@ namespace MyPhotoBiz.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditRoleViewModel model)
         {
-            if (!ModelState.IsValid) 
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
+
             var result = await _rolesService.UpdateRoleAsync(model.Id, model.RoleName);
-            
+
             if (result.Succeeded)
             {
+                // Persist permissions first
+                await _rolesService.SetRolePermissionsAsync(model.Id, model.Permissions ?? new List<string>());
+
+                // Get updated role view model
                 var vm = await _rolesService.GetRoleViewModelAsync(model.Id);
                 if (vm != null)
                 {
                     var html = await RenderViewAsync("_RoleCard", vm);
                     return Json(new { success = true, html, roleId = model.Id });
                 }
-                
-                // Persist permissions
-                await _rolesService.SetRolePermissionsAsync(model.Id, model.Permissions ?? new List<string>());
 
                 return Json(new { success = true, message = "Role updated successfully" });
             }

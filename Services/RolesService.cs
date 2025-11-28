@@ -159,34 +159,71 @@ namespace MyPhotoBiz.Services
         {
             var rolesViewModels = await GetAllRoleViewModelsAsync();
             var userRoleViewModels = await GetUserRolesViewModelAsync();
+            var availablePermissions = await GetAllAvailablePermissionsAsync();
 
             return new RolesIndexViewModel
             {
                 Roles = rolesViewModels,
-                UserRoles = userRoleViewModels
+                UserRoles = userRoleViewModels,
+                CreateRoleModel = new CreateRoleViewModel 
+                { 
+                    AvailablePermissions = availablePermissions 
+                }
             };
         }
 
         public async Task<List<RoleViewModel>> GetAllRoleViewModelsAsync()
         {
             var roles = await GetAllRolesAsync();
-            var roleViewModels = new List<RoleViewModel>();
+            var rolesList = roles.ToList();
 
-            foreach (var role in roles)
+            var roleIds = rolesList.Select(r => r.Id).ToList();
+            var allPermissions = await _context.Set<RolePermission>()
+                .Where(rp => roleIds.Contains(rp.RoleId))
+                .GroupBy(rp => rp.RoleId)
+                .ToDictionaryAsync(g => g.Key, g => g.Select(rp => rp.Permission).Distinct().ToList());
+
+            var allUsers = await _userManager.Users.ToListAsync();
+            var userRoleLookup = new Dictionary<string, List<ApplicationUser>>();
+
+            foreach (var role in rolesList)
             {
                 var roleName = role?.Name ?? string.Empty;
-                var usersInRole = await GetUsersInRoleAsync(roleName);
+                var usersInRole = new List<ApplicationUser>();
+
+                foreach (var user in allUsers)
+                {
+                    if (await _userManager.IsInRoleAsync(user, roleName))
+                    {
+                        usersInRole.Add(user);
+                    }
+                }
+
+                userRoleLookup[roleName] = usersInRole;
+            }
+
+            var roleViewModels = new List<RoleViewModel>();
+
+            foreach (var role in rolesList)
+            {
+                var roleName = role?.Name ?? string.Empty;
+                var usersInRole = userRoleLookup.GetValueOrDefault(roleName) ?? new List<ApplicationUser>();
+                var persistedPermissions = allPermissions.GetValueOrDefault(role.Id) ?? new List<string>();
+                var permissions = persistedPermissions.Count > 0 ? persistedPermissions : GetRolePermissions(roleName);
 
                 roleViewModels.Add(new RoleViewModel
                 {
                     Id = role?.Id ?? string.Empty,
+                    RoleId = role?.Id ?? string.Empty,
                     Name = roleName,
+                    RoleName = roleName,
                     Description = GetRoleDescription(roleName),
-                    UserCount = usersInRole?.Count() ?? 0,
-                    Users = usersInRole?.Take(5).ToList() ?? new List<ApplicationUser>(),
+                    UserCount = usersInRole.Count,
+                    Users = usersInRole.Take(5).ToList(),
                     Icon = GetRoleIcon(roleName),
                     ColorClass = GetRoleColorClass(roleName),
-                    Permissions = (await GetPersistedRolePermissionsAsync(role.Id)).Count > 0 ? await GetPersistedRolePermissionsAsync(role.Id) : GetRolePermissions(roleName)
+                    Permissions = permissions,
+                    CreatedDate = DateTime.Now
                 });
             }
 
@@ -201,17 +238,22 @@ namespace MyPhotoBiz.Services
 
             var roleName = role.Name ?? string.Empty;
             var usersInRole = await GetUsersInRoleAsync(roleName);
+            var persistedPermissions = await GetPersistedRolePermissionsAsync(role.Id);
+            var permissions = persistedPermissions.Count > 0 ? persistedPermissions : GetRolePermissions(roleName);
 
             return new RoleViewModel
             {
                 Id = role.Id,
+                RoleId = role.Id,
                 Name = roleName,
+                RoleName = roleName,
                 Description = GetRoleDescription(roleName),
                 UserCount = usersInRole?.Count() ?? 0,
                 Users = usersInRole?.Take(5).ToList() ?? new List<ApplicationUser>(),
                 Icon = GetRoleIcon(roleName),
                 ColorClass = GetRoleColorClass(roleName),
-                Permissions = (await GetPersistedRolePermissionsAsync(role.Id)).Count > 0 ? await GetPersistedRolePermissionsAsync(role.Id) : GetRolePermissions(roleName),
+                Permissions = permissions,
+                CreatedDate = DateTime.Now,
                 LastUpdated = DateTime.Now
             };
         }
@@ -224,6 +266,8 @@ namespace MyPhotoBiz.Services
 
             var roleName = role.Name ?? string.Empty;
             var usersInRole = await GetUsersInRoleAsync(roleName);
+            var persistedPermissions = await GetPersistedRolePermissionsAsync(role.Id);
+            var permissions = persistedPermissions.Count > 0 ? persistedPermissions : GetRolePermissions(roleName);
 
             return new RoleDetailsViewModel
             {
@@ -232,7 +276,7 @@ namespace MyPhotoBiz.Services
                 Description = GetRoleDescription(roleName),
                 UserCount = usersInRole?.Count() ?? 0,
                 Users = usersInRole?.ToList() ?? new List<ApplicationUser>(),
-                Permissions = (await GetPersistedRolePermissionsAsync(role.Id)).Count > 0 ? await GetPersistedRolePermissionsAsync(role.Id) : GetRolePermissions(roleName)
+                Permissions = permissions
             };
         }
 

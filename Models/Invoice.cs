@@ -21,11 +21,13 @@ namespace MyPhotoBiz.Models
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
         public decimal Amount { get; set; }
 
         public DateTime UpdatedDate { get; set; } = DateTime.Now;
 
         [Column(TypeName = "decimal(18,2)")]
+        [Range(0, double.MaxValue, ErrorMessage = "Tax cannot be negative")]
         public decimal Tax { get; set; }
 
         public string? Notes { get; set; }

@@ -10112,6 +10112,38 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\albums\1\7c75190f-60c6-4594-a2c8-9fc4a46cccd1_thumb.jpg))</OriginalItemSpec>
     </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\albums\1\7e6c88bb-8a82-49f5-8638-13fcf8a5a372.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>myPhotoBiz</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/myPhotoBiz</BasePath>
+      <RelativePath>uploads/albums/1/7e6c88bb-8a82-49f5-8638-13fcf8a5a372.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\albums\1\7e6c88bb-8a82-49f5-8638-13fcf8a5a372.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\albums\1\7e6c88bb-8a82-49f5-8638-13fcf8a5a372_thumb.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>myPhotoBiz</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/myPhotoBiz</BasePath>
+      <RelativePath>uploads/albums/1/7e6c88bb-8a82-49f5-8638-13fcf8a5a372_thumb.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\albums\1\7e6c88bb-8a82-49f5-8638-13fcf8a5a372_thumb.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\albums\1\7f4506ff-b8ee-4680-b780-b7e23569565d.jpg))">
       <SourceType>Package</SourceType>
       <SourceId>myPhotoBiz</SourceId>

@@ -1,47 +1,48 @@
 @model MyPhotoBiz.ViewModels.CreateRoleViewModel
-<div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+
+<div class="modal fade" id="createRoleModal" tabindex="-1" role="dialog" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <form asp-action="Create" method="post" id="createRoleForm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createRoleModalLabel">Create New Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createRoleForm" asp-action="Create" asp-controller="Roles" method="post">
                 @Html.AntiForgeryToken()
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createRoleModalLabel">Create New Role</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="roleName" class="form-label">Role Name</label>
-                        <input type="text" class="form-control" id="roleName" name="RoleName" required />
+                        <label for="roleName" class="form-label">Role Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="roleName" asp-for="RoleName" required>
+                        <span asp-validation-for="RoleName" class="text-danger"></span>
                     </div>
+
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="Description" rows="3"></textarea>
+                        <textarea class="form-control" id="description" asp-for="Description" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Permissions</label>
-                        <div class="form-check form-check-columns">
-                            @if (Model.AvailablePermissions != null && Model.AvailablePermissions.Any())
-                            {
-                                int i = 0;
-                                foreach (var perm in Model.AvailablePermissions)
+
+                    @if (Model?.AvailablePermissions?.Any() == true)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Permissions</label>
+                            <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                @foreach (var permission in Model.AvailablePermissions)
                                 {
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="Permissions" value="@perm" id="createPerm_@i" />
-                                        <label class="form-check-label" for="createPerm_@i">@perm</label>
+                                        <input class="form-check-input" type="checkbox" name="Permissions" value="@permission" id="perm_@permission">
+                                        <label class="form-check-label" for="perm_@permission">
+                                            @permission
+                                        </label>
                                     </div>
-                                    i++;
                                 }
-                            }
-                            else
-                            {
-                                <div class="text-muted">No permissions available.</div>
-                            }
+                            </div>
                         </div>
-                    </div>
+                    }
                 </div>
-                    <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Create Role</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Create Role</button>
                 </div>
             </form>
         </div>

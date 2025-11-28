@@ -17,8 +17,10 @@ namespace MyPhotoBiz.Models
         [Required]
         public DateTime ScheduledDate { get; set; }
 
+        [Range(0, 24, ErrorMessage = "Duration hours must be between 0 and 24")]
         public int DurationHours { get; set; } = 2;
 
+        [Range(0, 59, ErrorMessage = "Duration minutes must be between 0 and 59")]
         public int DurationMinutes { get; set; } = 0;
 
         [Required]

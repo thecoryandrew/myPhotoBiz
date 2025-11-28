@@ -1,0 +1,405 @@
+@model MyPhotoBiz.ViewModels.UsersIndexViewModel
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="container-fluid">
+    <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
+        <div class="card-body px-4 py-3">
+            <div class="row align-items-center">
+                <div class="col-9">
+                    <h4 class="fw-semibold mb-8">User Management</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a class="text-muted text-decoration-none" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="breadcrumb-item" aria-current="page">Users</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-3">
+                    <div class="text-center mb-n5">
+                        <img src="~/images/breadcrumb/ChatBc.png" alt="" class="img-fluid mb-n4" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title fw-semibold">All Users</h5>
+                <button type="button" class="btn btn-primary" onclick="showCreateUserModal()">
+                    <i class="ti ti-plus me-1"></i> Add New User
+                </button>
+            </div>
+
+            <div data-table data-table-rows-per-page="10" class="table-responsive">
+                <!-- Search and Filter Row -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="ti ti-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="Search users..." data-table-search />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" data-table-filter="role">
+                            <option value="">All Roles</option>
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <option value="@role.Name">@role.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" data-table-filter="status">
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Locked">Locked</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <table class="table table-hover align-middle text-nowrap mb-0">
+                    <thead class="text-dark fs-4">
+                        <tr>
+                            <th>
+                                <span data-table-sort="profilePicture" class="sortable">User</span>
+                            </th>
+                            <th>
+                                <span data-table-sort="email" class="sortable">Email</span>
+                            </th>
+                            <th>
+                                <span data-table-sort="role" class="sortable">Roles</span>
+                            </th>
+                            <th>
+                                <span data-table-sort="status" class="sortable">Status</span>
+                            </th>
+                            <th>
+                                <span data-table-sort="createdDate" class="sortable">Joined</span>
+                            </th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model?.Users?.Any() == true)
+                        {
+                            @foreach (var user in Model.Users)
+                            {
+                                <tr data-table-row
+                                    data-role="@string.Join(",", user.Roles)"
+                                    data-status="@user.Status"
+                                    data-search="@user.FirstName @user.LastName @user.Email @string.Join(" ", user.Roles)">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="@Url.Content(user.ProfilePicture ?? "~/images/users/user-1.jpg")"
+                                                 class="rounded-circle me-2"
+                                                 width="40"
+                                                 height="40"
+                                                 alt="@user.FullName" />
+                                            <div>
+                                                <h6 class="mb-0 fw-semibold">@user.FullName</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">@user.Email</span>
+                                    </td>
+                                    <td>
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            var badgeClass = role switch
+                                            {
+                                                "Admin" => "bg-danger-subtle text-danger",
+                                                "Photographer" => "bg-primary-subtle text-primary",
+                                                "Client" => "bg-success-subtle text-success",
+                                                _ => "bg-secondary-subtle text-secondary"
+                                            };
+                                            <span class="badge @badgeClass me-1">@role</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @{
+                                            var statusBadge = user.Status switch
+                                            {
+                                                "Active" => "bg-success-subtle text-success",
+                                                "Inactive" => "bg-secondary-subtle text-secondary",
+                                                "Locked" => "bg-danger-subtle text-danger",
+                                                "Pending" => "bg-warning-subtle text-warning",
+                                                _ => "bg-secondary-subtle text-secondary"
+                                            };
+                                            var statusIcon = user.Status switch
+                                            {
+                                                "Active" => "ti-check",
+                                                "Inactive" => "ti-minus",
+                                                "Locked" => "ti-lock",
+                                                "Pending" => "ti-clock",
+                                                _ => "ti-help"
+                                            };
+                                        }
+                                        <span class="badge @statusBadge">
+                                            <i class="ti @statusIcon me-1"></i>@user.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">@user.CreatedDate.ToString("MMM dd, yyyy")</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light-primary"
+                                                    onclick="showUserDetails('@user.Id')"
+                                                    title="View Details">
+                                                <i class="ti ti-eye"></i>
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light-info"
+                                                    onclick="showEditUserModal('@user.Id')"
+                                                    title="Edit User">
+                                                <i class="ti ti-edit"></i>
+                                            </button>
+                                            @if (user.Status == "Locked")
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-sm btn-light-success"
+                                                        onclick="unlockUser('@user.Id')"
+                                                        title="Unlock User">
+                                                    <i class="ti ti-lock-open"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-sm btn-light-warning"
+                                                        onclick="lockUser('@user.Id')"
+                                                        title="Lock User">
+                                                    <i class="ti ti-lock"></i>
+                                                </button>
+                                            }
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light-secondary"
+                                                    onclick="showChangePasswordModal('@user.Id')"
+                                                    title="Change Password">
+                                                <i class="ti ti-key"></i>
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light-danger"
+                                                    onclick="deleteUser('@user.Id', '@user.FullName')"
+                                                    title="Delete User">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="ti ti-users fs-8 mb-2"></i>
+                                        <p>No users found</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">Rows per page:</span>
+                        <select class="form-select form-select-sm" style="width: auto;" data-table-rows-per-page-select>
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span data-table-pagination-info></span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-light me-1" data-table-pagination-prev>
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light" data-table-pagination-next>
+                            <i class="ti ti-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="createUserModal"></div>
+<div id="editUserModal"></div>
+<div id="userDetailsModal"></div>
+<div id="changePasswordModal"></div>
+
+@section Scripts {
+    <script>
+        // Show Create User Modal
+        function showCreateUserModal() {
+            $.ajax({
+                url: '@Url.Action("Create", "Users")',
+                type: 'GET',
+                success: function(result) {
+                    $('#createUserModal').html(result);
+                    var modal = new bootstrap.Modal(document.getElementById('createUserModalElement'));
+                    modal.show();
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to load create user form', 'error');
+                }
+            });
+        }
+
+        // Show Edit User Modal
+        function showEditUserModal(userId) {
+            $.ajax({
+                url: '@Url.Action("Edit", "Users")/' + userId,
+                type: 'GET',
+                success: function(result) {
+                    $('#editUserModal').html(result);
+                    var modal = new bootstrap.Modal(document.getElementById('editUserModalElement'));
+                    modal.show();
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to load edit user form', 'error');
+                }
+            });
+        }
+
+        // Show User Details Modal
+        function showUserDetails(userId) {
+            $.ajax({
+                url: '@Url.Action("Details", "Users")/' + userId,
+                type: 'GET',
+                success: function(result) {
+                    $('#userDetailsModal').html(result);
+                    var modal = new bootstrap.Modal(document.getElementById('userDetailsModalElement'));
+                    modal.show();
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to load user details', 'error');
+                }
+            });
+        }
+
+        // Show Change Password Modal
+        function showChangePasswordModal(userId) {
+            $.ajax({
+                url: '@Url.Action("ChangePassword", "Users")/' + userId,
+                type: 'GET',
+                success: function(result) {
+                    $('#changePasswordModal').html(result);
+                    var modal = new bootstrap.Modal(document.getElementById('changePasswordModalElement'));
+                    modal.show();
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to load change password form', 'error');
+                }
+            });
+        }
+
+        // Lock User
+        function lockUser(userId) {
+            if (!confirm('Are you sure you want to lock this user account?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Lock", "Users")/' + userId,
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(result) {
+                    if (result.success) {
+                        showToast('Success', result.message, 'success');
+                        location.reload();
+                    } else {
+                        showToast('Error', result.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to lock user', 'error');
+                }
+            });
+        }
+
+        // Unlock User
+        function unlockUser(userId) {
+            $.ajax({
+                url: '@Url.Action("Unlock", "Users")/' + userId,
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(result) {
+                    if (result.success) {
+                        showToast('Success', result.message, 'success');
+                        location.reload();
+                    } else {
+                        showToast('Error', result.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to unlock user', 'error');
+                }
+            });
+        }
+
+        // Delete User
+        function deleteUser(userId, userName) {
+            if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Delete", "Users")/' + userId,
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(result) {
+                    if (result.success) {
+                        showToast('Success', result.message, 'success');
+                        location.reload();
+                    } else {
+                        showToast('Error', result.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    showToast('Error', 'Failed to delete user', 'error');
+                }
+            });
+        }
+
+        // Toast notification helper
+        function showToast(title, message, type) {
+            // Assuming you have a toast notification system
+            // This is a simple alert fallback
+            if (typeof toastr !== 'undefined') {
+                toastr[type](message, title);
+            } else {
+                alert(title + ': ' + message);
+            }
+        }
+    </script>
+}

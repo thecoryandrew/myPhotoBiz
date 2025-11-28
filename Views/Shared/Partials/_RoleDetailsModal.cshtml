@@ -1,0 +1,39 @@
+@model MyPhotoBiz.ViewModels.RoleDetailsViewModel
+<div class="modal fade" id="roleDetailsModal" tabindex="-1" aria-labelledby="roleDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleDetailsModalLabel">Role Details - @Model.RoleName</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">@Model.Description</p>
+
+                <h6>Permissions</h6>
+                <ul>
+                    @foreach (var perm in Model.Permissions ?? new List<string>())
+                    {
+                        <li>@perm</li>
+                    }
+                </ul>
+
+                <h6>Users</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var u in Model.Users)
+                    {
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="@(u.ProfilePicture ?? "~/images/users/default-avatar.jpg")" class="rounded-circle me-1" style="width:36px;height:36px;object-fit:cover;" />
+                            <div>
+                                <div class="fw-semibold">@u.FullName</div>
+                                <div class="text-muted small">@u.Email</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,7 +1,7 @@
 @model MyPhotoBiz.ViewModels.RolesIndexViewModel
 @{
     ViewBag.Title = "Roles";
-    ViewBag.SubTitle = "Users";
+    ViewBag.SubTitle = "Management";
 }
 
 @section styles
@@ -12,86 +12,248 @@
 
     @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+    <div class="row justify-content-center">
+        <div class="col-xxl-10">
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+            <div class="d-flex align-items-sm-center flex-sm-row flex-column mb-3">
+                <div class="flex-grow-1">
+                    <h4 class="fs-xl mb-1">Manage Roles</h4>
+                    <p class="text-muted mb-0">Manage roles and permissions for smoother operations and secure access.</p>
+                </div>
 
+                <div class="text-end">
+                    <a href="javascript: void(0);" class="btn btn-success new-role-btn">
+                        <i class="ti ti-plus me-1"></i> Add New Role
+                    </a>
+                </div>
+            </div>
+
+            <!-- Roles Grid Cards -->
+            <div id="roleCards" class="row">
+                @if (Model?.Roles?.Any() == true)
+                {
+                    @foreach (var role in Model.Roles)
+                    {
+                        <div class="col-md-6 col-lg-3 role-card-wrapper" data-role-id="@role.Id">
+                            <div class="card role-card" data-role-id="@role.Id">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div class="d-flex align-items-start mb-4">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xl rounded-circle @role.ColorClass d-flex align-items-center justify-content-center">
+                                                <i class="ti @role.Icon fs-24 @(role.ColorClass.Replace("-subtle", "").Replace("bg-", "text-"))"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3 flex-grow-1">
+                                            <h5 class="mb-2">@role.RoleName</h5>
+                                            <p class="text-muted mb-0 fs-sm">
+                                                @(!string.IsNullOrEmpty(role.Description) ? role.Description : "No description available")
+                                            </p>
+                                        </div>
+                                        <div class="ms-auto">
+                                            <div class="dropdown">
+                                                <a href="javascript:void(0);" class="text-muted fs-xl" data-bs-toggle="dropdown">
+                                                    <i class="ti ti-dots-vertical"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item view-role" href="javascript:void(0);" data-role-id="@role.Id"><i class="ti ti-eye me-2"></i>View</a>
+                                                    </li>
+                                                    <li><a class="dropdown-item edit-role" href="javascript:void(0);" data-role-id="@role.Id"><i class="ti ti-edit me-2"></i>Edit</a></li>
+                                                    <li><a class="dropdown-item text-danger delete-role" href="javascript:void(0);" data-role-id="@role.Id" data-role-name="@role.RoleName"><i class="ti ti-trash me-2"></i>Delete</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (role.Permissions?.Any() == true)
+                                    {
+                                        <ul class="list-unstyled mb-3">
+                                            @foreach (var permission in role.Permissions.Take(4))
+                                            {
+                                                <li class="d-flex align-items-center mb-2">
+                                                    <span class="ti ti-check fs-lg text-success me-2"></span> @permission
+                                                </li>
+                                            }
+                                            @if (role.Permissions.Count > 4)
+                                            {
+                                                <li class="d-flex align-items-center text-muted">
+                                                    <span class="ti ti-dots fs-lg me-2"></span> +@(role.Permissions.Count - 4) more
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+
+                                    <p class="mb-2 text-muted">Total @role.UserCount user@(role.UserCount != 1 ? "s" : "")</p>
+                                    @if (role.Users?.Any() == true)
+                                    {
+                                        <div class="avatar-group avatar-group-sm mb-3">
+                                            @foreach (var user in role.Users.Take(4))
+                                            {
+                                                <div class="avatar">
+                                                    <img src="@Url.Content(user.ProfilePicture ?? "~/images/users/user-1.jpg")" alt="" class="rounded-circle avatar-sm" data-bs-toggle="tooltip" title="@user.FirstName @user.LastName">
+                                                </div>
+                                            }
+                                            @if (role.Users.Count > 4)
+                                            {
+                                                <div class="avatar avatar-sm" data-bs-toggle="tooltip" title="@(role.UserCount - 4) More">
+                                                    <span class="avatar-title text-bg-primary rounded-circle fw-bold">
+                                                        +@(role.UserCount - 4)
+                                                    </span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted fs-xs"><i class="ti ti-clock me-1"></i>Updated @(role?.LastUpdated != default ? role.LastUpdated.ToString("MMM dd, yyyy") : "N/A")</span>
+                                        <a href="javascript:void(0);" class="btn btn-sm @(role.ColorClass.Replace("-subtle", "").Replace("bg-", "btn-outline-")) rounded-pill view-role" data-role-id="@role.Id">Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <p class="text-muted mb-3">No roles found. Create your first role.</p>
+                            <button type="button" class="btn btn-primary new-role-btn">
+                                <i class="ti ti-plus me-1"></i> Create First Role
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- User Management Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div data-table data-table-rows-per-page="8" class="card">
+                        <div class="card-header border-light justify-content-between">
+                            <div class="d-flex gap-2">
+                                <div class="app-search">
+                                    <input data-table-search type="search" class="form-control" placeholder="Search users...">
+                                    <i data-lucide="search" class="app-search-icon text-muted"></i>
+                                </div>
+                                <button data-table-delete-selected class="btn btn-danger d-none">Delete</button>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="me-2 fw-semibold">Filter By:</span>
+
+                                <!-- Role Type Filter -->
+                                <div class="app-search">
+                                    <select data-table-filter="role" class="form-select form-control my-1 my-md-0">
+                                        <option value="All">All Roles</option>
+                                        @if (Model?.Roles?.Any() == true)
+                                        {
+                                            @foreach (var role in Model.Roles)
+                                            {
+                                                <option value="@role.RoleName">@role.RoleName</option>
+                                            }
+                                        }
+                                    </select>
+                                    <i data-lucide="shield" class="app-search-icon text-muted"></i>
+                                </div>
+
+                                <!-- Records Per Page -->
+                                <div>
+                                    <select data-table-set-rows-per-page class="form-select form-control my-1 my-md-0">
+                                        <option value="5">5</option>
+                                        <option value="8" selected>8</option>
+                                        <option value="10">10</option>
+                                        <option value="15">15</option>
+                                        <option value="20">20</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-custom table-centered table-select table-hover w-100 mb-0">
+                                <thead class="bg-light align-middle bg-opacity-25 thead-sm">
+                                    <tr class="text-uppercase fs-xxs">
+                                        <th class="ps-3" style="width: 1%;">
+                                            <input data-table-select-all class="form-check-input form-check-input-light fs-14 mt-0" type="checkbox" id="select-all-users">
+                                        </th>
+                                        <th data-table-sort>ID</th>
+                                        <th data-table-sort="name">User</th>
+                                        <th data-table-sort="role">Role</th>
+                                        <th data-table-sort>Email</th>
+                                        <th data-table-sort>Status</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
-                                    @foreach (var userRole in Model.UserRoles)
+                                    @if (Model?.UserRoles?.Any() == true)
+                                    {
+                                        @foreach (var userRole in Model.UserRoles)
+                                        {
+                                            <tr>
+                                                <td class="ps-3">
+                                                    <input class="form-check-input form-check-input-light fs-14 file-item-check mt-0" type="checkbox" value="@userRole.UserId">
+                                                </td>
+                                                <td>
+                                                    <h5 class="m-0">
+                                                        <a href="#" class="link-reset">#USR@(userRole.UserId.Substring(0, Math.Min(6, userRole.UserId.Length)))</a>
+                                                    </h5>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="avatar avatar-sm">
+                                                            <img src="@Url.Content(userRole.ProfilePicture ?? "~/images/users/user-1.jpg")" class="img-fluid rounded-circle" alt="@userRole.UserName">
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="fs-base mb-0">
+                                                                <a data-sort="name" href="#" class="link-reset">@userRole.FirstName @userRole.LastName</a>
+                                                            </h5>
+                                                            <p class="text-muted fs-xs mb-0">@("@" + userRole.UserName)</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td data-sort="role">
+                                                    @if (userRole.Roles?.Any() == true)
+                                                    {
+                                                        @string.Join(", ", userRole.Roles)
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">No role</span>
+                                                    }
+                                                </td>
+                                                <td>@userRole.Email</td>
+                                                <td>
+                                                    @if (userRole.IsActive)
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success badge-label">Active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning-subtle text-warning badge-label">Inactive</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-center gap-1">
+                                                        <a href="@Url.Action("Details", "Users", new { id = userRole.UserId })" class="btn btn-light btn-icon btn-sm rounded-circle" title="View User">
+                                                            <i class="ti ti-eye fs-lg"></i>
+                                                        </a>
+                                                        <a href="@Url.Action("Edit", "Users", new { id = userRole.UserId })" class="btn btn-light btn-icon btn-sm rounded-circle" title="Edit User">
+                                                            <i class="ti ti-edit fs-lg"></i>
+                                                        </a>
+                                                        <a href="javascript:void(0);" data-user-id="@userRole.UserId" data-user-name="@userRole.FirstName @userRole.LastName" class="btn btn-light btn-icon btn-sm rounded-circle delete-user" title="Delete User">
+                                                            <i class="ti ti-trash fs-lg"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
                                     {
                                         <tr>
-                                            <td class="ps-3">
-                                                <input class="form-check-input form-check-input-light fs-14 file-item-check mt-0" 
-                                                       type="checkbox">
-                                            </td>
-                                            <td>
-                                                <h5 class="m-0">
-                                                    <a href="#" class="link-reset">@userRole.DisplayId</a>
-                                                </h5>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <div class="avatar avatar-sm">
-                                                         <img src="@Url.Content(userRole.Avatar)" 
-                                                             class="img-fluid rounded-circle" alt="">
-                                                    </div>
-                                                    <div>
-                                                        <h5 class="fs-base mb-0">
-                                                            <a data-sort="user" href="#" class="link-reset">
-                                                                @userRole.UserName
-                                                            </a>
-                                                        </h5>
-                                                        <p class="text-muted fs-xs mb-0">@userRole.Email</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>@userRole.RoleName</td>
-                                            <td>
-                                                @userRole.LastUpdated.ToString("dd MMM, yyyy") 
-                                                <small class="text-muted">@userRole.LastUpdated.ToString("h:mm tt")</small>
-                                            </td>
-                                            <td>
-                                                @switch (userRole.Status)
-                                                {
-                                                    case "Active":
-                                                        <span class="badge bg-success-subtle text-success badge-label">Active</span>
-                                                        break;
-                                                    case "Inactive":
-                                                        <span class="badge bg-warning-subtle text-warning badge-label">Inactive</span>
-                                                        break;
-                                                    case "Suspended":
-                                                        <span class="badge bg-danger-subtle text-danger badge-label">Suspended</span>
-                                                        break;
-                                                }
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center gap-1">
-                                                    <a href="@Url.Action("Details", "Users", new { id = userRole.UserId })" 
-                                                       class="btn btn-light btn-icon btn-sm rounded-circle">
-                                                        <i class="ti ti-eye fs-lg"></i>
-                                                    </a>
-                                                    <a href="@Url.Action("Edit", "Users", new { id = userRole.UserId })" 
-                                                       class="btn btn-light btn-icon btn-sm rounded-circle">
-                                                        <i class="ti ti-edit fs-lg"></i>
-                                                    </a>
-                                                    <a href="#" data-table-delete-row 
-                                                       class="btn btn-light btn-icon btn-sm rounded-circle delete-user"
-                                                       data-user-id="@userRole.UserId">
-                                                        <i class="ti ti-trash fs-lg"></i>
-                                                    </a>
-                                                </div>
+                                            <td colspan="7" class="text-center py-5">
+                                                <p class="text-muted mb-0">No users found.</p>
                                             </td>
                                         </tr>
                                     }
@@ -100,22 +262,19 @@
                         </div>
                         <div class="card-footer border-0">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div data-table-pagination-info="roles"></div>
+                                <div data-table-pagination-info></div>
                                 <div data-table-pagination></div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div><!-- end col -->
+            </div><!-- end row -->
 
-        </div>
-    </div>
+        </div> <!-- end col-->
+    </div> <!-- end row-->
 </div>
 
-@await Html.PartialAsync("_CreateRoleModal")
-
-@await Html.PartialAsync("_EditRoleModal")
-@await Html.PartialAsync("_RoleDetailsModal")
+@Html.AntiForgeryToken()
 
 @section scripts
 {
@@ -158,6 +317,25 @@
 
         // Delegate click handlers for view/edit/delete
         document.addEventListener('click', function (e) {
+            const newRoleBtn = e.target.closest('.new-role-btn');
+            if (newRoleBtn) {
+                e.preventDefault();
+                fetch(`@Url.Action("Create", "Roles")`)
+                    .then(res => res.text())
+                    .then(html => {
+                        const existing = document.getElementById('createRoleModal');
+                        if (existing) existing.remove();
+                        document.body.insertAdjacentHTML('beforeend', html);
+                        new bootstrap.Modal(document.getElementById('createRoleModal')).show();
+                        initTooltips();
+                    })
+                    .catch(err => {
+                        console.error('Error fetching create modal:', err);
+                        showToast('Failed to load create modal', 'danger');
+                    });
+                return;
+            }
+
             const editBtn = e.target.closest('.edit-role');
             if (editBtn) {
                 e.preventDefault();
@@ -170,6 +348,7 @@
                         if (existing) existing.remove();
                         document.body.insertAdjacentHTML('beforeend', html);
                         new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+                        initTooltips();
                     })
                     .catch(err => {
                         console.error('Error fetching edit modal:', err);
@@ -205,7 +384,7 @@
                 if (confirm(`Are you sure you want to delete the role "${roleName}"?`)) {
                     const formData = new FormData();
                     formData.append('id', roleId);
-                    formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+                    formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value);
 
                     fetch('@Url.Action("Delete", "Roles")', {
                         method: 'POST',
@@ -214,8 +393,8 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            const card = document.querySelector(`.role-card[data-role-id='${roleId}']`);
-                            if (card) card.remove();
+                            const cardWrapper = document.querySelector(`.role-card-wrapper[data-role-id='${roleId}']`);
+                            if (cardWrapper) cardWrapper.remove();
                             showToast(data.message || 'Role deleted', 'success');
                         } else {
                             showToast(data.message || 'Error deleting role', 'danger');
@@ -250,10 +429,15 @@
                         btn.disabled = false;
                         if (data.success) {
                             if (data.html) {
-                                document.getElementById('roleCards').insertAdjacentHTML('afterbegin', data.html);
+                                const col = document.createElement('div');
+                                col.className = 'col-md-6 col-lg-3 role-card-wrapper';
+                                col.setAttribute('data-role-id', data.roleId);
+                                col.innerHTML = data.html;
+                                document.getElementById('roleCards').insertAdjacentElement('afterbegin', col);
                                 initTooltips();
                                 var modal = bootstrap.Modal.getInstance(document.getElementById('createRoleModal'));
                                 if (modal) modal.hide();
+                                createForm.reset();
                                 showToast('Role created successfully', 'success');
                             } else {
                                 location.reload();
@@ -289,8 +473,8 @@
                         btn.disabled = false;
                         if (data.success) {
                             if (data.html && data.roleId) {
-                                var cardEl = document.querySelector(`.role-card[data-role-id='${data.roleId}']`);
-                                if (cardEl) cardEl.outerHTML = data.html;
+                                var cardWrapper = document.querySelector(`.role-card-wrapper[data-role-id='${data.roleId}']`);
+                                if (cardWrapper) cardWrapper.innerHTML = data.html;
                                 initTooltips();
                                 var modal = bootstrap.Modal.getInstance(document.getElementById('editRoleModal'));
                                 if (modal) modal.hide();
@@ -311,20 +495,4 @@
             }
         })();
     </script>
-}
-
-@functions {
-    string GetRelativeTime(DateTime dateTime)
-    {
-        var timeSpan = DateTime.Now - dateTime;
-        
-        if (timeSpan.TotalMinutes < 60)
-            return $"{(int)timeSpan.TotalMinutes} min ago";
-        if (timeSpan.TotalHours < 24)
-            return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours != 1 ? "s" : "")} ago";
-        if (timeSpan.TotalDays < 30)
-            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays != 1 ? "s" : "")} ago";
-        
-        return dateTime.ToString("MMM dd, yyyy");
-    }
 }

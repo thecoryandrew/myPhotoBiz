@@ -7,6 +7,7 @@ namespace MyPhotoBiz.ViewModels
     {
         public List<RoleViewModel> Roles { get; set; } = new();
         public List<UserRoleViewModel> UserRoles { get; set; } = new();
+        public CreateRoleViewModel CreateRoleModel { get; set; } = new();
     }
 
     public class RoleViewModel
@@ -22,6 +23,7 @@ namespace MyPhotoBiz.ViewModels
         public int UserCount { get; set; }
         public List<ApplicationUser> Users { get; set; } = new();
         public List<string> Permissions { get; set; } = new();
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime LastUpdated { get; set; } = DateTime.Now;
     }
 
@@ -30,11 +32,16 @@ namespace MyPhotoBiz.ViewModels
         public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
+        public List<string> Roles { get; set; } = new();
         public string Status { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
         public DateTime LastUpdated { get; set; }
         public string Avatar { get; set; } = string.Empty;
+        public string? ProfilePicture { get; set; }
         public string DisplayId => $"#USR{Math.Abs(UserId.GetHashCode()).ToString().PadLeft(5, '0').Substring(0, 5)}";
     }
 
@@ -77,6 +84,7 @@ namespace MyPhotoBiz.ViewModels
         public int UserCount { get; set; }
         public List<ApplicationUser> Users { get; set; } = new();
         public List<string> Permissions { get; set; } = new();
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 
     public class AssignRoleViewModel

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyPhotoBiz.Models;
 using MyPhotoBiz.Services;
+using MyPhotoBiz.Helpers;
 
 namespace MyPhotoBiz.Controllers
 {
@@ -20,23 +21,9 @@ namespace MyPhotoBiz.Controllers
             _userManager = userManager;
         }
 
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Index()
+        private MyPhotoBiz.ViewModels.ClientDetailsViewModel MapToClientDetailsViewModel(Client client)
         {
-            var clients = await _clientService.GetAllClientsAsync();
-            return View(clients);
-        }
-
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Details(int id)
-        {
-            var client = await _clientService.GetClientByIdAsync(id);
-            if (client == null)
-            {
-                return NotFound();
-            }
-            // Build details view model
-            var model = new MyPhotoBiz.ViewModels.ClientDetailsViewModel
+            return new MyPhotoBiz.ViewModels.ClientDetailsViewModel
             {
                 Id = client.Id,
                 FirstName = client.FirstName,
@@ -67,7 +54,25 @@ namespace MyPhotoBiz.Controllers
                 }).ToList() ?? new List<MyPhotoBiz.ViewModels.PhotoShootViewModel>(),
                 Invoices = client.Invoices?.ToList() ?? new List<MyPhotoBiz.Models.Invoice>()
             };
+        }
 
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Index()
+        {
+            var clients = await _clientService.GetAllClientsAsync();
+            return View(clients);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Details(int id)
+        {
+            var client = await _clientService.GetClientByIdAsync(id);
+            if (client == null)
+            {
+                return NotFound();
+            }
+
+            var model = MapToClientDetailsViewModel(client);
             return View("Details", model);
         }
 
@@ -84,22 +89,37 @@ namespace MyPhotoBiz.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Create user account for client
+                var existingUser = await _userManager.FindByEmailAsync(client.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "A user with this email already exists.");
+                    return View(client);
+                }
+
+                var temporaryPassword = PasswordGenerator.GenerateSecurePassword();
+
                 var user = new ApplicationUser
                 {
                     UserName = client.Email,
                     Email = client.Email,
                     FirstName = client.FirstName,
                     LastName = client.LastName,
-                    EmailConfirmed = true
+                    EmailConfirmed = false
                 };
 
-                var result = await _userManager.CreateAsync(user, "TempPassword123!");
+                var result = await _userManager.CreateAsync(user, temporaryPassword);
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, "Client");
+
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
                     client.UserId = user.Id;
                     await _clientService.CreateClientAsync(client);
+
+                    TempData["SuccessMessage"] = $"Client created successfully. Temporary password: {temporaryPassword}";
+                    TempData["PasswordWarning"] = "Please share this password securely with the client. It will not be shown again.";
+
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -169,38 +189,8 @@ namespace MyPhotoBiz.Controllers
             {
                 return NotFound();
             }
-            var model = new MyPhotoBiz.ViewModels.ClientDetailsViewModel
-            {
-                Id = client.Id,
-                FirstName = client.FirstName,
-                LastName = client.LastName,
-                Email = client.Email,
-                PhoneNumber = client.PhoneNumber,
-                Address = client.Address,
-                Notes = client.Notes,
-                UpdatedDate = client.UpdatedDate,
-                CreatedDate = client.CreatedDate,
-                User = client.User,
-                PhotoShootCount = client.PhotoShoots?.Count ?? 0,
-                InvoiceCount = client.Invoices?.Count ?? 0,
-                TotalRevenue = client.Invoices?.Sum(i => i.Amount + i.Tax) ?? 0m,
-                PhotoShoots = client.PhotoShoots?.Select(ps => new MyPhotoBiz.ViewModels.PhotoShootViewModel
-                {
-                    Id = ps.Id,
-                    Title = ps.Title,
-                    ClientId = ps.ClientId,
-                    ScheduledDate = ps.ScheduledDate,
-                    UpdatedDate = ps.UpdatedDate,
-                    Location = ps.Location,
-                    Status = ps.Status,
-                    Price = ps.Price,
-                    Notes = ps.Notes,
-                    DurationHours = ps.DurationHours,
-                    DurationMinutes = ps.DurationMinutes
-                }).ToList() ?? new List<MyPhotoBiz.ViewModels.PhotoShootViewModel>(),
-                Invoices = client.Invoices?.ToList() ?? new List<MyPhotoBiz.Models.Invoice>()
-            };
 
+            var model = MapToClientDetailsViewModel(client);
             return View(model);
         }
     }

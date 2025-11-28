@@ -1,35 +1,61 @@
 @model MyPhotoBiz.ViewModels.RoleDetailsViewModel
-<div class="modal fade" id="roleDetailsModal" tabindex="-1" aria-labelledby="roleDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+
+<div class="modal fade" id="roleDetailsModal" tabindex="-1" role="dialog" aria-labelledby="roleDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="roleDetailsModalLabel">Role Details - @Model.RoleName</h5>
+                <h5 class="modal-title" id="roleDetailsModalLabel">@Model?.RoleName - Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted">@Model.Description</p>
-
-                <h6>Permissions</h6>
-                <ul>
-                    @foreach (var perm in Model.Permissions ?? new List<string>())
-                    {
-                        <li>@perm</li>
-                    }
-                </ul>
-
-                <h6>Users</h6>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var u in Model.Users)
-                    {
-                        <div class="d-flex align-items-center gap-2">
-                            <img src="@(u.ProfilePicture ?? "~/images/users/default-avatar.jpg")" class="rounded-circle me-1" style="width:36px;height:36px;object-fit:cover;" />
-                            <div>
-                                <div class="fw-semibold">@u.FullName</div>
-                                <div class="text-muted small">@u.Email</div>
-                            </div>
-                        </div>
-                    }
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Role Name</label>
+                        <p class="form-control-plaintext">@Model?.RoleName</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Created Date</label>
+                        <p class="form-control-plaintext">@Model?.CreatedDate.ToString("MMM dd, yyyy h:mm tt")</p>
+                    </div>
                 </div>
+
+                @if (!string.IsNullOrEmpty(Model?.Description))
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <p class="form-control-plaintext">@Model.Description</p>
+                    </div>
+                }
+
+                @if (Model?.Permissions?.Any() == true)
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Permissions</label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            @foreach (var permission in Model.Permissions)
+                            {
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">@permission</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Permissions</label>
+                        <p class="text-muted">No permissions assigned</p>
+                    </div>
+                }
+
+                @if (Model?.UserCount > 0)
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Users with this Role</label>
+                        <p class="form-control-plaintext">@Model.UserCount user(s)</p>
+                    </div>
+                }
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

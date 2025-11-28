@@ -7,7 +7,8 @@ namespace MyPhotoBiz.Models
     public enum UserType
     {
         Client,
-        Photographer
+        Photographer,
+        Admin
     }
 
     public class ApplicationUser : IdentityUser
@@ -27,8 +28,7 @@ namespace MyPhotoBiz.Models
         {
             get => UserType == UserType.Photographer;
             set => UserType = value ? UserType.Photographer : UserType.Client;
-        }
-
+        }   
         // Full name property for convenience
         public string FullName => $"{FirstName} {LastName}";
     }

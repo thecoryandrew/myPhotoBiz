@@ -1,0 +1,281 @@
+@model MyPhotoBiz.ViewModels.UserDetailsViewModel
+
+<div class="modal fade" id="userDetailsModalElement" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailsModalLabel">
+                    <i class="ti ti-user me-2"></i>User Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+                    <!-- User Profile Card -->
+                    <div class="col-lg-4 mb-3">
+                        <div class="card bg-light-info text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <img src="@Url.Content(Model.ProfilePicture ?? "~/images/users/user-1.jpg")"
+                                         class="rounded-circle"
+                                         width="120"
+                                         height="120"
+                                         alt="@Model.FullName" />
+                                </div>
+                                <h5 class="fw-semibold mb-1">@Model.FullName</h5>
+                                <p class="text-muted mb-2">@Model.Email</p>
+
+                                @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                                {
+                                    <p class="mb-3">
+                                        <i class="ti ti-phone me-1"></i>@Model.PhoneNumber
+                                    </p>
+                                }
+
+                                <!-- Status Badge -->
+                                @{
+                                    var statusBadge = Model.Status switch
+                                    {
+                                        "Active" => "bg-success text-white",
+                                        "Inactive" => "bg-secondary text-white",
+                                        "Locked" => "bg-danger text-white",
+                                        "Pending" => "bg-warning text-dark",
+                                        _ => "bg-secondary text-white"
+                                    };
+                                    var statusIcon = Model.Status switch
+                                    {
+                                        "Active" => "ti-check",
+                                        "Inactive" => "ti-minus",
+                                        "Locked" => "ti-lock",
+                                        "Pending" => "ti-clock",
+                                        _ => "ti-help"
+                                    };
+                                }
+                                <span class="badge @statusBadge fs-4 py-2 px-3">
+                                    <i class="ti @statusIcon me-1"></i>@Model.Status
+                                </span>
+
+                                <!-- Roles -->
+                                <div class="mt-3">
+                                    <h6 class="fw-semibold mb-2">Assigned Roles</h6>
+                                    @if (Model.Roles?.Any() == true)
+                                    {
+                                        @foreach (var role in Model.Roles)
+                                        {
+                                            var roleBadge = role switch
+                                            {
+                                                "Admin" => "bg-danger-subtle text-danger",
+                                                "Photographer" => "bg-primary-subtle text-primary",
+                                                "Client" => "bg-success-subtle text-success",
+                                                _ => "bg-secondary-subtle text-secondary"
+                                            };
+                                            <span class="badge @roleBadge me-1 mb-1">@role</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No roles assigned</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Details and Statistics -->
+                    <div class="col-lg-8">
+                        <!-- Account Information -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0 fw-semibold">
+                                    <i class="ti ti-info-circle me-2"></i>Account Information
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label text-muted small">User ID</label>
+                                        <p class="mb-0 fw-semibold">@Model.Id</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label text-muted small">Email Confirmed</label>
+                                        <p class="mb-0">
+                                            @if (Model.EmailConfirmed)
+                                            {
+                                                <span class="badge bg-success-subtle text-success">
+                                                    <i class="ti ti-check me-1"></i>Yes
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning">
+                                                    <i class="ti ti-x me-1"></i>No
+                                                </span>
+                                            }
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label text-muted small">Account Created</label>
+                                        <p class="mb-0 fw-semibold">@Model.CreatedDate.ToString("MMMM dd, yyyy")</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label text-muted small">Last Login</label>
+                                        <p class="mb-0 fw-semibold">
+                                            @if (Model.LastLogin.HasValue)
+                                            {
+                                                @Model.LastLogin.Value.ToString("MMMM dd, yyyy hh:mm tt")
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Never</span>
+                                            }
+                                        </p>
+                                    </div>
+                                    @if (Model.LockoutEnd.HasValue && Model.LockoutEnd.Value > DateTimeOffset.UtcNow)
+                                    {
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label text-muted small">Locked Until</label>
+                                            <p class="mb-0">
+                                                <span class="badge bg-danger-subtle text-danger">
+                                                    <i class="ti ti-lock me-1"></i>@Model.LockoutEnd.Value.ToString("MMMM dd, yyyy hh:mm tt")
+                                                </span>
+                                            </p>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0 fw-semibold">
+                                    <i class="ti ti-chart-bar me-2"></i>Statistics
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-primary-subtle rounded">
+                                            <h3 class="fw-bold text-primary mb-1">@Model.TotalClients</h3>
+                                            <p class="text-muted mb-0 small">Total Clients</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-success-subtle rounded">
+                                            <h3 class="fw-bold text-success mb-1">@Model.TotalPhotoShoots</h3>
+                                            <p class="text-muted mb-0 small">Photo Shoots</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-info-subtle rounded">
+                                            <h3 class="fw-bold text-info mb-1">@Model.TotalInvoices</h3>
+                                            <p class="text-muted mb-0 small">Invoices</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions -->
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0 fw-semibold">
+                                    <i class="ti ti-shield-check me-2"></i>Permissions
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                @if (Model.Permissions?.Any() == true)
+                                {
+                                    <div class="row">
+                                        @foreach (var permission in Model.Permissions)
+                                        {
+                                            <div class="col-md-6 mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ti ti-check-circle text-success me-2"></i>
+                                                    <div>
+                                                        <p class="mb-0 fw-semibold">@permission.Name</p>
+                                                        @if (!string.IsNullOrEmpty(permission.Description))
+                                                        {
+                                                            <small class="text-muted">@permission.Description</small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted text-center mb-0">No permissions assigned to this user's roles</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i>Close
+                </button>
+                <button type="button" class="btn btn-info" onclick="showEditUserModal('@Model.Id')">
+                    <i class="ti ti-edit me-1"></i>Edit User
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="showChangePasswordModal('@Model.Id')">
+                    <i class="ti ti-key me-1"></i>Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showEditUserModal(userId) {
+        // Close details modal
+        var detailsModal = bootstrap.Modal.getInstance(document.getElementById('userDetailsModalElement'));
+        detailsModal.hide();
+
+        // Show edit modal
+        $.ajax({
+            url: '/Users/Edit/' + userId,
+            type: 'GET',
+            success: function(result) {
+                $('#editUserModal').html(result);
+                var modal = new bootstrap.Modal(document.getElementById('editUserModalElement'));
+                modal.show();
+            },
+            error: function(xhr) {
+                showToast('Error', 'Failed to load edit user form', 'error');
+            }
+        });
+    }
+
+    function showChangePasswordModal(userId) {
+        // Close details modal
+        var detailsModal = bootstrap.Modal.getInstance(document.getElementById('userDetailsModalElement'));
+        detailsModal.hide();
+
+        // Show change password modal
+        $.ajax({
+            url: '/Users/ChangePassword/' + userId,
+            type: 'GET',
+            success: function(result) {
+                $('#changePasswordModal').html(result);
+                var modal = new bootstrap.Modal(document.getElementById('changePasswordModalElement'));
+                modal.show();
+            },
+            error: function(xhr) {
+                showToast('Error', 'Failed to load change password form', 'error');
+            }
+        });
+    }
+
+    function showToast(title, message, type) {
+        if (typeof toastr !== 'undefined') {
+            toastr[type](message, title);
+        } else {
+            alert(title + ': ' + message);
+        }
+    }
+</script>

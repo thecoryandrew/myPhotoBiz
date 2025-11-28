@@ -34,6 +34,8 @@ namespace MyPhotoBiz.Data
         public DbSet<PrintItem> PrintItems { get; set; }
         public DbSet<PrintPricing> PrintPricings { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -46,6 +48,8 @@ namespace MyPhotoBiz.Data
             ConfigureGalleryRelationships(modelBuilder);
             ConfigureDecimalConversions(modelBuilder);
             ConfigureIndexes(modelBuilder);
+
+
         }
 
         /// <summary>
@@ -55,7 +59,8 @@ namespace MyPhotoBiz.Data
         {
             // SQLite doesn't support schemas, so we just configure table names
             // Don't use HasDefaultSchema for SQLite compatibility
-            
+
+
             modelBuilder.Entity<ApplicationUser>().ToTable("AspNetUsers");
             modelBuilder.Entity<IdentityRole>().ToTable("AspNetRoles");
             modelBuilder.Entity<IdentityUserRole<string>>().ToTable("AspNetUserRoles");
