@@ -1,6 +1,14 @@
 @{
-    ViewBag.Title = "PhotoShoot Calendar";
-    ViewBag.SubTitle = "Apps";
+    ViewBag.Title = "Calendar";
+    ViewBag.PageTitle = "Photo Shoot Calendar";
+    ViewBag.SubTitle = "Photo Shoots";
+    ViewBag.SubTitleUrl = Url.Action("Index", "PhotoShoots");
+    ViewBag.Icon = "ti-calendar";
+    ViewBag.Color = "warning";
+    ViewBag.ActionUrl = Url.Action("Index", "PhotoShoots");
+    ViewBag.ActionText = "List View";
+    ViewBag.ActionIcon = "ti-list";
+    ViewBag.ActionColor = "light";
 }
 
 @section styles
@@ -9,8 +17,7 @@
 }
 
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="outlook-box">
         <!-- Sidebar -->

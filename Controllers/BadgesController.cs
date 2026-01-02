@@ -172,24 +172,24 @@ namespace MyPhotoBiz.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Get all clients who don't have this badge yet
-                var clientsWithoutBadge = await _context.Clients
+                // Get all client profiles who don't have this badge yet
+                var clientProfilesWithoutBadge = await _context.ClientProfiles
                     .Include(c => c.ClientBadges)
                     .Where(c => !c.ClientBadges.Any(cb => cb.BadgeId == newUserBadge.Id))
                     .ToListAsync();
 
-                if (!clientsWithoutBadge.Any())
+                if (!clientProfilesWithoutBadge.Any())
                 {
                     TempData["Success"] = "All existing clients already have the New User badge!";
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Award badge to all clients without it
-                foreach (var client in clientsWithoutBadge)
+                // Award badge to all client profiles without it
+                foreach (var clientProfile in clientProfilesWithoutBadge)
                 {
                     var clientBadge = new ClientBadge
                     {
-                        ClientId = client.Id,
+                        ClientProfileId = clientProfile.Id,
                         BadgeId = newUserBadge.Id,
                         EarnedDate = DateTime.UtcNow,
                         Notes = "Awarded to existing client"
@@ -200,8 +200,8 @@ namespace MyPhotoBiz.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Awarded New User badge to {clientsWithoutBadge.Count} existing clients");
-                TempData["Success"] = $"Successfully awarded New User badge to {clientsWithoutBadge.Count} existing clients!";
+                _logger.LogInformation($"Awarded New User badge to {clientProfilesWithoutBadge.Count} existing clients");
+                TempData["Success"] = $"Successfully awarded New User badge to {clientProfilesWithoutBadge.Count} existing clients!";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)

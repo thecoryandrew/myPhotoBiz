@@ -16,10 +16,11 @@ namespace MyPhotoBiz.Services
         Task<bool> DeleteGalleryAsync(int id);
         Task<bool> ToggleGalleryStatusAsync(int id, bool isActive);
 
-        // Access Code Management
-        Task<(string clientCode, string clientPassword)> GenerateAccessCodesAsync();
-        Task<(string clientCode, string clientPassword)> RegenerateAccessCodesAsync(int galleryId);
-        Task<bool> ValidateAccessCodesAsync(string clientCode, string clientPassword);
+        // Access Management (Identity-based)
+        Task<GalleryAccess> GrantAccessAsync(int galleryId, int clientProfileId, DateTime? expiryDate = null);
+        Task<bool> RevokeAccessAsync(int galleryId, int clientProfileId);
+        Task<bool> ValidateUserAccessAsync(int galleryId, string userId);
+        Task<IEnumerable<GalleryAccess>> GetGalleryAccessesAsync(int galleryId);
 
         // Album Management
         Task<bool> AddAlbumsToGalleryAsync(int galleryId, List<int> albumIds);

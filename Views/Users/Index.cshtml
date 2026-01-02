@@ -1,34 +1,16 @@
 @model MyPhotoBiz.ViewModels.UsersIndexViewModel
 
 @{
-    ViewData["Title"] = "User Management";
+    ViewBag.Title = "Users";
+    ViewBag.PageTitle = "User Management";
+    ViewBag.Icon = "ti-users";
+    ViewBag.Color = "info";
 }
 
 @Html.AntiForgeryToken()
 
 <div class="container-fluid">
-    <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
-        <div class="card-body px-4 py-3">
-            <div class="row align-items-center">
-                <div class="col-9">
-                    <h4 class="fw-semibold mb-8">User Management</h4>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <a class="text-muted text-decoration-none" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
-                            <li class="breadcrumb-item" aria-current="page">Users</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="col-3">
-                    <div class="text-center mb-n5">
-                        <img src="~/images/breadcrumb/ChatBc.png" alt="" class="img-fluid mb-n4" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <partial name="Partials/_PageTitle" />
 
     <div class="card">
         <div class="card-body">

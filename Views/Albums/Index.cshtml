@@ -1,12 +1,13 @@
 @model IEnumerable<MyPhotoBiz.Models.Album>
 @{
     ViewBag.Title = "Albums";
-    ViewBag.SubTitle = "Index";
+    ViewBag.PageTitle = "Album Management";
+    ViewBag.Icon = "ti-folder";
+    ViewBag.Color = "success";
 }
 
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">
@@ -84,7 +85,7 @@
                                             @album.PhotoShoot.Title
                                         </a>
                                     </td>
-                                    <td>@album.Client.FirstName @album.Client.LastName</td>
+                                    <td>@album.ClientProfile?.User?.FirstName @album.ClientProfile?.User?.LastName</td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="badge bg-primary-subtle text-primary">

@@ -21,7 +21,7 @@ namespace MyPhotoBiz.ViewModels
         // Recent activity
         public IEnumerable<PhotoShootViewModel> RecentPhotoshoots { get; set; } = new List<PhotoShootViewModel>();
         public IEnumerable<Invoice> RecentInvoices { get; set; } = new List<Invoice>();
-        public IEnumerable<Client> RecentClients { get; set; } = new List<Client>();
+        public IEnumerable<ClientProfile> RecentClients { get; set; } = new List<ClientProfile>();
 
         // Chart data
         public IDictionary<string, decimal> MonthlyRevenueData { get; set; } = new Dictionary<string, decimal>();

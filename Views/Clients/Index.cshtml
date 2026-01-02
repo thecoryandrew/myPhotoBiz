@@ -1,13 +1,14 @@
 @using MyPhotoBiz.Models
-@model IEnumerable<Client>
+@model IEnumerable<ClientProfile>
 @{
     ViewBag.Title = "Clients";
-    ViewBag.SubTitle = "Index";
+    ViewBag.PageTitle = "Client Management";
+    ViewBag.Icon = "ti-users";
+    ViewBag.Color = "primary";
 }
 
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row">
         <div class="col-12">
@@ -66,9 +67,9 @@
                                         <div class="d-flex justify-content-start align-items-center gap-2">
                                             <div class="avatar avatar-sm">
                                                 <span class="avatar-title bg-primary-subtle text-primary rounded-circle">
-                                                    @{ 
-                                                        var firstName = client.FirstName?.Substring(0, 1) ?? "";
-                                                        var lastName = client.LastName?.Substring(0, 1) ?? "";
+                                                    @{
+                                                        var firstName = client.User?.FirstName?.Substring(0, 1) ?? "";
+                                                        var lastName = client.User?.LastName?.Substring(0, 1) ?? "";
                                                     }
                                                     @firstName@lastName
                                                 </span>
@@ -76,14 +77,14 @@
                                             <div>
                                                 <h5 class="text-nowrap mb-0 lh-base fs-base">
                                                     <a data-sort="name" asp-action="Details" asp-route-id="@client.Id" class="link-reset">
-                                                        @client.FirstName @client.LastName
+                                                        @client.User?.FirstName @client.User?.LastName
                                                     </a>
                                                 </h5>
                                                 <p class="text-muted fs-xs mb-0">@client.Address</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>@client.Email</td>
+                                    <td>@client.User?.Email</td>
                                     <td>@(string.IsNullOrWhiteSpace(client.PhoneNumber) ? "-" : client.PhoneNumber)</td>
                                     <td>@client.CreatedDate.ToString("MMM dd, yyyy")</td>
                                     <td>
@@ -94,7 +95,7 @@
                                             <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Edit">
                                                 <i class="ti ti-edit fs-lg"></i>
                                             </a>
-                                            <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-light btn-icon btn-sm rounded-circle delete-client" title="Delete" data-client-name="@client.FirstName @client.LastName">
+                                            <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-light btn-icon btn-sm rounded-circle delete-client" title="Delete" data-client-name="@client.User?.FirstName @client.User?.LastName">
                                                 <i class="ti ti-trash fs-lg"></i>
                                             </a>
                                         </div>

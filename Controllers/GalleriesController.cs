@@ -113,9 +113,7 @@ namespace MyPhotoBiz.Controllers
                 {
                     success = true,
                     message = $"Gallery '{gallery.Name}' created successfully!",
-                    galleryId = gallery.Id,
-                    clientCode = gallery.ClientCode,
-                    clientPassword = gallery.ClientPassword
+                    galleryId = gallery.Id
                 });
             }
             catch (Exception ex)
@@ -149,7 +147,6 @@ namespace MyPhotoBiz.Controllers
                     ExpiryDate = gallery.ExpiryDate,
                     BrandColor = gallery.BrandColor,
                     IsActive = gallery.IsActive,
-                    ClientCode = gallery.ClientCode,
                     CreatedDate = gallery.CreatedDate,
                     SelectedAlbumIds = gallery.Albums.Select(a => a.Id).ToList(),
                     AvailableAlbums = await _galleryService.GetAvailableAlbumsAsync(id)
@@ -340,31 +337,69 @@ namespace MyPhotoBiz.Controllers
             }
         }
 
-        // GET: Galleries/RegenerateCode/5
-        public async Task<IActionResult> RegenerateCode(int id)
+        // GET: Galleries/ManageAccess/5
+        public async Task<IActionResult> ManageAccess(int id)
         {
             try
             {
                 var gallery = await _galleryService.GetGalleryByIdAsync(id);
-
                 if (gallery == null)
                 {
                     return NotFound();
                 }
 
+                var accesses = await _galleryService.GetGalleryAccessesAsync(id);
+
                 ViewBag.GalleryId = id;
                 ViewBag.GalleryName = gallery.Name;
 
-                return PartialView("_RegenerateCodeModal");
+                return PartialView("_ManageAccessModal", accesses);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading regenerate code modal for gallery ID: {id}");
+                _logger.LogError(ex, $"Error loading access management for gallery ID: {id}");
                 return StatusCode(500, "An error occurred.");
             }
         }
 
-        // POST: Galleries/RegenerateCode
+        // POST: Galleries/GrantAccess
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GrantAccess(int galleryId, int clientProfileId, DateTime? expiryDate = null)
+        {
+            try
+            {
+                await _galleryService.GrantAccessAsync(galleryId, clientProfileId, expiryDate);
+                return Json(new { success = true, message = "Access granted successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error granting access to gallery {galleryId} for client {clientProfileId}");
+                return Json(new { success = false, message = "An error occurred while granting access." });
+            }
+        }
+
+        // POST: Galleries/RevokeAccess
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RevokeAccess(int galleryId, int clientProfileId)
+        {
+            try
+            {
+                var result = await _galleryService.RevokeAccessAsync(galleryId, clientProfileId);
+                if (!result)
+                {
+                    return Json(new { success = false, message = "Access not found." });
+                }
+                return Json(new { success = true, message = "Access revoked successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error revoking access to gallery {galleryId} from client {clientProfileId}");
+                return Json(new { success = false, message = "An error occurred while revoking access." });
+            }
+        }
+
         public async Task<IActionResult> GetAccessUrl(int id)
         {
             try

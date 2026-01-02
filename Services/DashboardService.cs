@@ -6,6 +6,19 @@ using MyPhotoBiz.ViewModels;
 
 namespace MyPhotoBiz.Services
 {
+    // TODO: [HIGH] Dashboard is missing key metrics:
+    //       - Pending bookings requiring action
+    //       - Contracts awaiting signature
+    //       - Overdue invoices with aging breakdown
+    //       - Today's schedule at-a-glance
+    //       - Galleries expiring soon
+    // TODO: [MEDIUM] Add caching for dashboard stats (Redis or in-memory)
+    // TODO: [MEDIUM] MonthlyRevenue calculation should filter by current month, not total
+    // TODO: [MEDIUM] YearlyRevenue is same as MonthlyRevenue - implement actual yearly calc
+    // TODO: [FEATURE] Add revenue forecast/trend analysis
+    // TODO: [FEATURE] Add client acquisition metrics
+    // TODO: [FEATURE] Add photographer utilization stats
+    // TODO: [FEATURE] Add recent activity timeline
     public class DashboardService : IDashboardService
     {
         private readonly ApplicationDbContext _context;
@@ -16,7 +29,7 @@ namespace MyPhotoBiz.Services
         }
 
         public async Task<int> GetClientsCountAsync() =>
-            await _context.Clients.CountAsync();
+            await _context.ClientProfiles.CountAsync();
 
         public async Task<int> GetPhotoShootsCountAsync() =>
             await _context.PhotoShoots.CountAsync();
@@ -49,7 +62,7 @@ namespace MyPhotoBiz.Services
         public async Task<IEnumerable<Invoice>> GetRecentInvoicesAsync(int count = 5)
         {
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .OrderByDescending(i => i.InvoiceDate)
                 .Take(count)
@@ -59,7 +72,7 @@ namespace MyPhotoBiz.Services
         public async Task<IEnumerable<PhotoShoot>> GetUpcomingPhotoShootsAsync(int count = 5)
         {
             return await _context.PhotoShoots
-                .Include(p => p.Client)
+                .Include(p => p.ClientProfile)
                 .Where(p => p.ScheduledDate >= DateTime.Today)
                 .OrderBy(p => p.ScheduledDate)
                 .Take(count)
@@ -78,7 +91,8 @@ namespace MyPhotoBiz.Services
 
             var upcomingPhotoShoots = await GetUpcomingPhotoShootsAsync(5);
             var recentInvoices = await GetRecentInvoicesAsync(5);
-            var recentClients = await _context.Clients
+            var recentClients = await _context.ClientProfiles
+                .Include(c => c.User)
                 .OrderByDescending(c => c.Id)
                 .Take(5)
                 .ToListAsync();
@@ -115,7 +129,7 @@ namespace MyPhotoBiz.Services
             {
                 Id = ps.Id,
                 Title = ps.Title,
-                ClientId = ps.ClientId,
+                ClientId = ps.ClientProfileId,
                 Location = ps.Location ?? string.Empty,
                 ScheduledDate = ps.ScheduledDate,
                 UpdatedDate = ps.UpdatedDate,
@@ -125,7 +139,7 @@ namespace MyPhotoBiz.Services
                 DurationHours = ps.DurationHours,
                 DurationMinutes = ps.DurationMinutes
                 ,
-                Client = ps.Client
+                ClientProfile = ps.ClientProfile
             }).ToList();
 
             return new DashboardViewModel

@@ -1,7 +1,12 @@
 @model MyPhotoBiz.ViewModels.CreateInvoiceViewModel
 @{
-    ViewBag.Title = "Create Invoice";
+    ViewBag.Title = "Create";
+    ViewBag.PageTitle = "Create Invoice";
     ViewBag.SubTitle = "Invoices";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Invoices");
+    ViewBag.Icon = "ti-file-plus";
+    ViewBag.Color = "danger";
+    ViewBag.BackUrl = Url.Action("Index", "Invoices");
 }
 
 @section Styles {
@@ -9,7 +14,7 @@
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">
@@ -90,7 +95,7 @@
                                                 {
                                                     foreach (var s in shoots)
                                                     {
-                                                        <option value="@s.Id" data-client-id="@s.ClientId" data-price="@s.Price" data-title="@s.Title">@s.Title</option>
+                                                        <option value="@s.Id" data-client-id="@s.ClientProfileId" data-price="@s.Price" data-title="@s.Title">@s.Title</option>
                                                     }
                                                 }
                                             </select>

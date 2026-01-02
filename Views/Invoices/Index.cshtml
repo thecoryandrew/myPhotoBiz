@@ -4,15 +4,14 @@
 @model IEnumerable<InvoiceViewModel>
 
 @{
-    ViewBag.Title = "Invoice List";
-    ViewBag.SubTitle = "Invoice";
+    ViewBag.Title = "Invoices";
+    ViewBag.PageTitle = "Invoice Management";
+    ViewBag.Icon = "ti-file-invoice";
+    ViewBag.Color = "danger";
 }
 
-@* Toasts handled by SweetAlert2 in layout *@
-
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row">
         <div class="col-12">

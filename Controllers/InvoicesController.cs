@@ -46,8 +46,8 @@ namespace MyPhotoBiz.Controllers
                 Amount = i.Amount,
                 Tax = i.Tax,
                 Notes = i.Notes,
-                ClientName = i.Client != null ? $"{i.Client.FirstName} {i.Client.LastName}" : "Unknown Client",
-                ClientEmail = i.Client?.Email ?? "No Email",
+                ClientName = i.ClientProfile?.User != null ? $"{i.ClientProfile.User.FirstName} {i.ClientProfile.User.LastName}" : "Unknown Client",
+                ClientEmail = i.ClientProfile?.User?.Email ?? "No Email",
                 PhotoShootTitle = i.PhotoShoot?.Title
             }).ToList();
 
@@ -70,8 +70,8 @@ namespace MyPhotoBiz.Controllers
                 Tax = invoice.Tax,
                 Notes = invoice.Notes,
                 PaidDate = invoice.PaidDate,
-                ClientName = invoice.Client != null ? $"{invoice.Client.FirstName} {invoice.Client.LastName}" : "Unknown Client",
-                ClientEmail = invoice.Client?.Email ?? "No Email",
+                ClientName = invoice.ClientProfile?.User != null ? $"{invoice.ClientProfile.User.FirstName} {invoice.ClientProfile.User.LastName}" : "Unknown Client",
+                ClientEmail = invoice.ClientProfile?.User?.Email ?? "No Email",
                 PhotoShootTitle = invoice.PhotoShoot?.Title,
                 InvoiceItems = invoice.InvoiceItems?.Select(ii => new InvoiceItemVM
                 {
@@ -121,25 +121,8 @@ namespace MyPhotoBiz.Controllers
                 return View(vm);
             }
 
-            // Create new client if needed
-            if (vm.ClientId == 0 && !string.IsNullOrEmpty(vm.ClientName) && !string.IsNullOrEmpty(vm.ClientEmail))
-            {
-                var nameParts = vm.ClientName.Split(' ', 2);
-                var firstName = nameParts[0];
-                var lastName = nameParts.Length > 1 ? nameParts[1] : "";
-
-                var client = new Client
-                {
-                    FirstName = firstName,
-                    LastName = lastName,
-                    Email = vm.ClientEmail,
-                    CreatedDate = DateTime.Now,
-                    UpdatedDate = DateTime.Now
-                };
-
-                await _clientService.CreateClientAsync(client);
-                vm.ClientId = client.Id;
-            }
+            // Note: Client creation should be done through the proper ClientsController
+            // which creates both ApplicationUser and ClientProfile
 
             var invoice = new Invoice
             {
@@ -150,7 +133,7 @@ namespace MyPhotoBiz.Controllers
                 Amount = vm.Amount,
                 Tax = vm.Tax,
                 Notes = vm.Notes,
-                ClientId = vm.ClientId,
+                ClientProfileId = vm.ClientId,
                 PhotoShootId = vm.PhotoShootId,
                 InvoiceItems = vm.InvoiceItems?.Where(ii => !string.IsNullOrWhiteSpace(ii.Description))
                     .Select(ii => new InvoiceItem
@@ -201,7 +184,7 @@ namespace MyPhotoBiz.Controllers
                 Amount = invoice.Amount,
                 Tax = invoice.Tax,
                 Notes = invoice.Notes,
-                ClientId = invoice.ClientId ?? 0,
+                ClientId = invoice.ClientProfileId ?? 0,
                 PhotoShootId = invoice.PhotoShootId,
                 InvoiceItems = invoice.InvoiceItems?.Select(ii => new InvoiceItemVM
                 {
@@ -239,7 +222,7 @@ namespace MyPhotoBiz.Controllers
             invoice.Amount = vm.Amount;
             invoice.Tax = vm.Tax;
             invoice.Notes = vm.Notes;
-            invoice.ClientId = vm.ClientId;
+            invoice.ClientProfileId = vm.ClientId;
             invoice.PhotoShootId = vm.PhotoShootId;
             invoice.InvoiceItems = vm.InvoiceItems?.Where(ii => !string.IsNullOrWhiteSpace(ii.Description))
                 .Select(ii => new InvoiceItem
@@ -270,8 +253,8 @@ namespace MyPhotoBiz.Controllers
                 Status = invoice.Status,
                 Amount = invoice.Amount,
                 Tax = invoice.Tax,
-                ClientName = invoice.Client != null ? $"{invoice.Client.FirstName} {invoice.Client.LastName}" : "Unknown Client",
-                ClientEmail = invoice.Client?.Email ?? "No Email"
+                ClientName = invoice.ClientProfile?.User != null ? $"{invoice.ClientProfile.User.FirstName} {invoice.ClientProfile.User.LastName}" : "Unknown Client",
+                ClientEmail = invoice.ClientProfile?.User?.Email ?? "No Email"
             };
 
             return View(vm);

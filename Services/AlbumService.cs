@@ -20,8 +20,8 @@ namespace MyPhotoBiz.Services
         {
             return await _context.Albums
                 .Include(a => a.PhotoShoot)
-                    .ThenInclude(ps => ps.Client)
-                .Include(a => a.Client)
+                    .ThenInclude(ps => ps.ClientProfile)
+                .Include(a => a.ClientProfile)
                 .Include(a => a.Photos)
                 .OrderByDescending(a => a.CreatedDate)
                 .ToListAsync();
@@ -32,10 +32,10 @@ namespace MyPhotoBiz.Services
         {
             return await _context.Albums
                 .Include(a => a.PhotoShoot)
-                    .ThenInclude(ps => ps.Client)
-                .Include(a => a.Client)
+                    .ThenInclude(ps => ps.ClientProfile)
+                .Include(a => a.ClientProfile)
                 .Include(a => a.Photos)
-                .Where(a => a.ClientId == clientId)
+                .Where(a => a.ClientProfileId == clientId)
                 .OrderByDescending(a => a.CreatedDate)
                 .ToListAsync();
         }
@@ -45,8 +45,8 @@ namespace MyPhotoBiz.Services
         {
             return await _context.Albums
                 .Include(a => a.PhotoShoot)
-                    .ThenInclude(ps => ps.Client)
-                .Include(a => a.Client)
+                    .ThenInclude(ps => ps.ClientProfile)
+                .Include(a => a.ClientProfile)
                 .Include(a => a.Photos)
                 .Where(a => a.PhotoShootId == photoShootId)
                 .OrderByDescending(a => a.CreatedDate)
@@ -58,8 +58,8 @@ namespace MyPhotoBiz.Services
         {
             return await _context.Albums
                 .Include(a => a.PhotoShoot)
-                    .ThenInclude(ps => ps.Client)
-                .Include(a => a.Client)
+                    .ThenInclude(ps => ps.ClientProfile)
+                .Include(a => a.ClientProfile)
                 .Include(a => a.Photos)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }

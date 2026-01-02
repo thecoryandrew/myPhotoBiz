@@ -104,8 +104,10 @@ namespace MyPhotoBiz.ViewModels
     {
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
+        public string Name => FullName; // Alias for FullName
+        public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
+        public bool IsSelected { get; set; }
     }
 
     public class PhotoShootSelectionViewModel

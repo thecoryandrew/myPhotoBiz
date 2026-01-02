@@ -1,13 +1,13 @@
 @model MyPhotoBiz.ViewModels.FileManagerViewModel
 @{
     ViewBag.Title = "File Manager";
-    ViewBag.SubTitle = "Manage Files";
+    ViewBag.PageTitle = "File Manager";
+    ViewBag.Icon = "ti-folders";
+    ViewBag.Color = "secondary";
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
-
-    @* TempData messages handled by SweetAlert2 toasts in layout *@
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-12">

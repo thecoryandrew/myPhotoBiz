@@ -1,0 +1,245 @@
+@model IEnumerable<MyPhotoBiz.Models.GalleryAccess>
+
+<div class="modal fade" id="manageAccessModalElement" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-users-plus me-2"></i>Manage Client Access - @ViewBag.GalleryName</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Grant Access Section -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary-subtle">
+                        <h6 class="mb-0"><i class="ti ti-user-plus me-2"></i>Grant Access to Client</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="grantAccessForm" onsubmit="return handleGrantAccess(event)">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" id="grantGalleryId" value="@ViewBag.GalleryId" />
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Select Client</label>
+                                    <select id="clientToGrant" class="form-select" required>
+                                        <option value="">-- Select a client --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Expiry Date (Optional)</label>
+                                    <input type="date" id="accessExpiryDate" class="form-control" />
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ti ti-plus me-1"></i> Grant
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Current Access List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="ti ti-users me-2"></i>Clients with Access</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Client</th>
+                                            <th>Granted</th>
+                                            <th>Expires</th>
+                                            <th>Status</th>
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="accessList">
+                                        @foreach (var access in Model)
+                                        {
+                                            <tr id="access-row-@access.ClientProfileId">
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar avatar-sm me-2">
+                                                            <span class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                                                                @(access.ClientProfile?.User?.FirstName?.Substring(0, 1) ?? "")@(access.ClientProfile?.User?.LastName?.Substring(0, 1) ?? "")
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <strong>@access.ClientProfile?.User?.FirstName @access.ClientProfile?.User?.LastName</strong>
+                                                            <div class="text-muted small">@access.ClientProfile?.User?.Email</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>@access.GrantedDate.ToString("MMM dd, yyyy")</td>
+                                                <td>
+                                                    @if (access.ExpiryDate.HasValue)
+                                                    {
+                                                        <span class="@(access.ExpiryDate < DateTime.UtcNow ? "text-danger" : "")">
+                                                            @access.ExpiryDate.Value.ToString("MMM dd, yyyy")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Never</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (access.IsValid)
+                                                    {
+                                                        <span class="badge bg-success">Active</span>
+                                                    }
+                                                    else if (!access.IsActive)
+                                                    {
+                                                        <span class="badge bg-secondary">Revoked</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">Expired</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (access.IsActive)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-danger"
+                                                                onclick="revokeAccess(@ViewBag.GalleryId, @access.ClientProfileId)">
+                                                            <i class="ti ti-x me-1"></i> Revoke
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-5">
+                                <i class="ti ti-users-off fs-1 d-block mb-2"></i>
+                                <p class="mb-0">No clients have access to this gallery yet.</p>
+                                <p class="small">Use the form above to grant access to clients.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load available clients when modal opens
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAvailableClients();
+    });
+
+    function loadAvailableClients() {
+        fetch('/api/clients')
+            .then(response => response.json())
+            .then(clients => {
+                const select = document.getElementById('clientToGrant');
+                select.innerHTML = '<option value="">-- Select a client --</option>';
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = `${client.firstName} ${client.lastName} (${client.email})`;
+                    select.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading clients:', error);
+            });
+    }
+
+    function handleGrantAccess(event) {
+        event.preventDefault();
+
+        const galleryId = document.getElementById('grantGalleryId').value;
+        const clientProfileId = document.getElementById('clientToGrant').value;
+        const expiryDate = document.getElementById('accessExpiryDate').value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        if (!clientProfileId) {
+            showToast('Error', 'Please select a client', 'error');
+            return false;
+        }
+
+        const formData = new FormData();
+        formData.append('galleryId', galleryId);
+        formData.append('clientProfileId', clientProfileId);
+        if (expiryDate) {
+            formData.append('expiryDate', expiryDate);
+        }
+
+        fetch('/Galleries/GrantAccess', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'RequestVerificationToken': token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Success', data.message, 'success');
+                // Reload modal content
+                showManageAccessModal(galleryId);
+            } else {
+                showToast('Error', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error', 'An error occurred while granting access.', 'error');
+        });
+
+        return false;
+    }
+
+    function revokeAccess(galleryId, clientProfileId) {
+        if (!confirm('Are you sure you want to revoke access for this client?')) {
+            return;
+        }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const formData = new FormData();
+        formData.append('galleryId', galleryId);
+        formData.append('clientProfileId', clientProfileId);
+
+        fetch('/Galleries/RevokeAccess', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'RequestVerificationToken': token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Success', data.message, 'success');
+                // Remove the row or reload modal
+                const row = document.getElementById(`access-row-${clientProfileId}`);
+                if (row) {
+                    row.remove();
+                }
+            } else {
+                showToast('Error', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error', 'An error occurred while revoking access.', 'error');
+        });
+    }
+</script>

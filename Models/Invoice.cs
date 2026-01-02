@@ -2,8 +2,19 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MyPhotoBiz.Enums;
+
 namespace MyPhotoBiz.Models
 {
+    // TODO: [CRITICAL] Amount is overwritten by ApplyPaymentAsync - create separate Payment model
+    // TODO: [HIGH] Add PaymentMethod field (Cash, Card, BankTransfer, PayPal, etc.)
+    // TODO: [HIGH] Add PaymentTransactionId for payment gateway reference
+    // TODO: [HIGH] Add PartiallyPaid status for partial payments
+    // TODO: [HIGH] Add Refunded status and RefundAmount field
+    // TODO: [MEDIUM] Add soft delete (IsDeleted flag)
+    // TODO: [MEDIUM] Add Currency field for international clients
+    // TODO: [MEDIUM] Add ReminderSentDate to track when reminders were sent
+    // TODO: [FEATURE] Add recurring invoice support
+    // TODO: [FEATURE] Add deposit/retainer tracking
     public class Invoice
     {
         public int Id { get; set; }
@@ -34,9 +45,9 @@ namespace MyPhotoBiz.Models
 
         public DateTime? PaidDate { get; set; }
 
-        // Client Navigation properties
-        public int? ClientId { get; set; }
-        public Client? Client { get; set; }
+        // Client Navigation properties (via ClientProfile)
+        public int? ClientProfileId { get; set; }
+        public virtual ClientProfile? ClientProfile { get; set; }
 
         // PhotoShoot Navigation properties
         public int? PhotoShootId { get; set; }

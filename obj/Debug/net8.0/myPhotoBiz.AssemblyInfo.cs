@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("myPhotoBiz")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d54277cc4ff31500f856eadedd72fcc4981b5ae4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c781bbc4e687dd3f7145a8716ac0c36ba1ddfb68")]
 [assembly: System.Reflection.AssemblyProductAttribute("myPhotoBiz")]
 [assembly: System.Reflection.AssemblyTitleAttribute("myPhotoBiz")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

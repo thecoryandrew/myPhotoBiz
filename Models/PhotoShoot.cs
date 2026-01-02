@@ -4,6 +4,14 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Models
 {
+    // TODO: [HIGH] Dual photographer FKs cause data sync issues:
+    //       - PhotographerId (string) references ApplicationUser.Id
+    //       - PhotographerProfileId (int) references PhotographerProfile.Id
+    //       Consolidate to single PhotographerProfileId
+    // TODO: [MEDIUM] Add soft delete (IsDeleted flag) to preserve history
+    // TODO: [MEDIUM] Add CreatedBy/UpdatedBy audit fields
+    // TODO: [FEATURE] Add recurring shoot support (RecurrencePattern)
+    // TODO: [FEATURE] Add shoot type categorization (Wedding, Portrait, Event, etc.)
     public class PhotoShoot
     {
         public int Id { get; set; }
@@ -42,13 +50,17 @@ namespace MyPhotoBiz.Models
 
         public PhotoShootStatus Status { get; set; } = PhotoShootStatus.InProgress;
 
-        // Foreign keys
+        // Foreign keys - Client relationship via ClientProfile
         [Required]
-        public int ClientId { get; set; }
-        public virtual Client Client { get; set; } = null!;
+        public int ClientProfileId { get; set; }
+        public virtual ClientProfile ClientProfile { get; set; } = null!;
 
+        // Photographer can be assigned via ApplicationUser or PhotographerProfile
         public string? PhotographerId { get; set; }
         public virtual ApplicationUser? Photographer { get; set; }
+
+        public int? PhotographerProfileId { get; set; }
+        public virtual PhotographerProfile? PhotographerProfile { get; set; }
 
         // Navigation properties
         public virtual ICollection<Album> Albums { get; set; } = new List<Album>();

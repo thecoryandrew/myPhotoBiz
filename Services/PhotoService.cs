@@ -30,7 +30,7 @@ namespace MyPhotoBiz.Services
             return await _context.Photos
                 .Include(p => p.Album)
                     .ThenInclude(a => a.PhotoShoot)
-                        .ThenInclude(ps => ps.Client)
+                        .ThenInclude(ps => ps.ClientProfile)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -79,7 +79,7 @@ namespace MyPhotoBiz.Services
          public async Task<IEnumerable<Photo>> GetPhotosByClientIdAsync(int clientId)
     {
         return await _context.Photos
-            .Where(p => p.ClientId == clientId)
+            .Where(p => p.ClientProfileId == clientId)
             .ToListAsync();
     }
         public async Task<Photo> UpdatePhotoAsync(Photo photo)

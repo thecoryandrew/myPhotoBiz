@@ -45,8 +45,8 @@ namespace MyPhotoBiz.ViewModels
 
         public int DurationHours { get; set; }
         public int DurationMinutes { get; set; }
-        // Optional Client details (not required for create/edit, but useful on dashboards)
-        public MyPhotoBiz.Models.Client? Client { get; set; }
+        // Optional ClientProfile details (not required for create/edit, but useful on dashboards)
+        public MyPhotoBiz.Models.ClientProfile? ClientProfile { get; set; }
     }
 
 

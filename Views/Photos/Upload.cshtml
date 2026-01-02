@@ -1,9 +1,14 @@
 @{
-    ViewBag.Title = "Upload Photos";
+    ViewBag.Title = "Upload";
+    ViewBag.PageTitle = "Upload Photos";
+    ViewBag.SubTitle = "Albums";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Albums");
+    ViewBag.Icon = "ti-upload";
+    ViewBag.Color = "success";
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-8">

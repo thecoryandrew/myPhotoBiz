@@ -5,6 +5,16 @@ using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Services
 {
+    // TODO: [CRITICAL-DATA] ApplyPaymentAsync overwrites invoice.Amount - should create separate Payment records
+    // TODO: [HIGH] Create Payment model to track payment history (amount, date, method, transactionId)
+    // TODO: [HIGH] Add DeleteInvoiceAsync method - currently only soft-deletes to Draft status
+    // TODO: [HIGH] Add partial payment support with PartiallyPaid status
+    // TODO: [HIGH] Add Refund functionality with Refunded status
+    // TODO: [MEDIUM] Add invoice status transition validation (state machine)
+    // TODO: [MEDIUM] Add scheduled job to auto-mark overdue invoices
+    // TODO: [FEATURE] Add PaymentMethod tracking (cash, card, bank transfer, etc.)
+    // TODO: [FEATURE] Add recurring invoice support
+    // TODO: [FEATURE] Add invoice PDF generation with branding
     public class InvoiceService : IInvoiceService
     {
         private readonly ApplicationDbContext _context;
@@ -19,7 +29,7 @@ namespace MyPhotoBiz.Services
         public async Task<IEnumerable<Invoice>> GetAllInvoicesAsync()
         {
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .Include(i => i.InvoiceItems)
                 .OrderByDescending(i => i.InvoiceDate)
@@ -29,7 +39,7 @@ namespace MyPhotoBiz.Services
         public async Task<Invoice?> GetInvoiceByIdAsync(int id)
         {
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .Include(i => i.InvoiceItems)
                 .FirstOrDefaultAsync(i => i.Id == id);
@@ -38,7 +48,7 @@ namespace MyPhotoBiz.Services
         public async Task<Invoice?> GetInvoiceByNumberAsync(string invoiceNumber)
         {
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .Include(i => i.InvoiceItems)
                 .FirstOrDefaultAsync(i => i.InvoiceNumber == invoiceNumber);
@@ -52,7 +62,7 @@ namespace MyPhotoBiz.Services
             int pageSize = 20)
         {
             var query = _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .AsQueryable();
 
@@ -60,7 +70,7 @@ namespace MyPhotoBiz.Services
                 query = query.Where(i => i.InvoiceNumber.Contains(searchTerm));
 
             if (clientId.HasValue)
-                query = query.Where(i => i.ClientId == clientId.Value);
+                query = query.Where(i => i.ClientProfileId == clientId.Value);
 
             if (status.HasValue)
                 query = query.Where(i => i.Status == status.Value);
@@ -79,9 +89,9 @@ namespace MyPhotoBiz.Services
             int pageSize = 20)
         {
             var query = _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
-                .Where(i => i.ClientId == clientId);
+                .Where(i => i.ClientProfileId == clientId);
 
             if (status.HasValue)
                 query = query.Where(i => i.Status == status.Value);
@@ -96,7 +106,7 @@ namespace MyPhotoBiz.Services
         public async Task<IEnumerable<Invoice>> GetRecentInvoicesAsync(int count)
         {
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .OrderByDescending(i => i.InvoiceDate)
                 .Take(count)
                 .ToListAsync();
@@ -106,7 +116,7 @@ namespace MyPhotoBiz.Services
         {
             var today = DateTime.Today;
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Where(i => i.DueDate < today && i.Status != InvoiceStatus.Paid)
                 .ToListAsync();
         }
@@ -115,7 +125,7 @@ namespace MyPhotoBiz.Services
         {
             var targetDate = DateTime.Today.AddDays(days);
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Where(i => i.DueDate <= targetDate && i.Status != InvoiceStatus.Paid)
                 .OrderBy(i => i.DueDate)
                 .ToListAsync();
@@ -124,7 +134,7 @@ namespace MyPhotoBiz.Services
         public async Task<IEnumerable<Invoice>> GetInvoicesByPhotoShootIdAsync(int photoShootId)
         {
             return await _context.Invoices
-                .Include(i => i.Client)
+                .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .Where(i => i.PhotoShootId == photoShootId)
                 .ToListAsync();
@@ -210,7 +220,7 @@ namespace MyPhotoBiz.Services
 
             var copy = new Invoice
             {
-                ClientId = invoice.ClientId,
+                ClientProfileId = invoice.ClientProfileId,
                 PhotoShootId = invoice.PhotoShootId,
                 InvoiceDate = DateTime.Today,
                 DueDate = DateTime.Today.AddDays(30),

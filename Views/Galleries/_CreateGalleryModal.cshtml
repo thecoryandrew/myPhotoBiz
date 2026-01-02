@@ -71,38 +71,39 @@
                             </div>
                         </div>
 
-                        <!-- Tab 2: Access Settings -->
+                        <!-- Tab 2: Client Access -->
                         <div class="tab-pane fade" id="access-settings" role="tabpanel">
-                            <div class="form-check form-switch mb-3">
-                                <input asp-for="AutoGenerateCode" class="form-check-input" type="checkbox" checked onchange="toggleManualCodes(this.checked)">
-                                <label asp-for="AutoGenerateCode" class="form-check-label">
-                                    Auto-generate secure access codes
-                                </label>
-                            </div>
-
-                            <div id="manual-codes" class="d-none">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label asp-for="ClientCode" class="form-label">Client Code</label>
-                                        <input asp-for="ClientCode" class="form-control" placeholder="e.g., ABC12345">
-                                        <span asp-validation-for="ClientCode" class="text-danger small"></span>
-                                        <small class="text-muted">8-character alphanumeric code</small>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label asp-for="ClientPassword" class="form-label">Client Password</label>
-                                        <input asp-for="ClientPassword" type="text" class="form-control" placeholder="Enter password">
-                                        <span asp-validation-for="ClientPassword" class="text-danger small"></span>
-                                        <small class="text-muted">Secure password for gallery access</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="alert alert-info mt-3">
+                            <div class="alert alert-info mb-3">
                                 <i class="ti ti-info-circle me-2"></i>
-                                <strong>Access Codes:</strong>
-                                Access codes will be generated automatically when you create the gallery.
-                                You can view and share them after creation or regenerate them at any time.
+                                <strong>Client Access:</strong>
+                                Select which clients should have access to this gallery. Clients will log in with their account to view the gallery.
+                            </div>
+
+                            <div class="client-selection">
+                                <label class="form-label">Grant Access To:</label>
+                                @if (Model?.AvailableClients?.Any() == true)
+                                {
+                                    <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+                                        @foreach (var client in Model.AvailableClients)
+                                        {
+                                            <label class="list-group-item d-flex align-items-center gap-2">
+                                                <input type="checkbox" name="SelectedClientProfileIds" value="@client.Id"
+                                                       class="form-check-input" @(client.IsSelected ? "checked" : "")>
+                                                <div>
+                                                    <strong>@client.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(client.Email))
+                                                    {
+                                                        <br><small class="text-muted">@client.Email</small>
+                                                    }
+                                                </div>
+                                            </label>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No clients available. Create clients first to grant gallery access.</p>
+                                }
                             </div>
                         </div>
 

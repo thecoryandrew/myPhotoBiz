@@ -1,0 +1,180 @@
+@using MyPhotoBiz.ViewModels
+@model ServicePackageViewModel
+@{
+    ViewBag.Title = "Create Package";
+    ViewBag.PageTitle = "Create Package";
+    ViewBag.Icon = "ti-package";
+    ViewBag.Color = "info";
+}
+
+<div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Basic Info -->
+                        <h5 class="mb-3"><i class="ti ti-info-circle me-2"></i>Basic Information</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8">
+                                <label asp-for="Name" class="form-label">Package Name <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="e.g., Wedding Photography Package" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Category" class="form-label">Category <span class="text-danger">*</span></label>
+                                <input asp-for="Category" class="form-control" list="categoryList" placeholder="e.g., Wedding" />
+                                <datalist id="categoryList">
+                                    <option value="Wedding"></option>
+                                    <option value="Portrait"></option>
+                                    <option value="Family"></option>
+                                    <option value="Event"></option>
+                                    <option value="Commercial"></option>
+                                    <option value="Maternity"></option>
+                                    <option value="Newborn"></option>
+                                </datalist>
+                                <span asp-validation-for="Category" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label">Short Description</label>
+                                <textarea asp-for="Description" class="form-control" rows="2" placeholder="Brief description for listing pages"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="DetailedDescription" class="form-label">Detailed Description</label>
+                                <textarea asp-for="DetailedDescription" class="form-control" rows="4" placeholder="Full description for the package details page"></textarea>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Pricing -->
+                        <h5 class="mb-3"><i class="ti ti-currency-dollar me-2"></i>Pricing</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label asp-for="BasePrice" class="form-label">Base Price <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="BasePrice" type="number" step="0.01" min="0" class="form-control" />
+                                </div>
+                                <span asp-validation-for="BasePrice" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="DiscountedPrice" class="form-label">Discounted Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="DiscountedPrice" type="number" step="0.01" min="0" class="form-control" />
+                                </div>
+                                <small class="text-muted">Leave blank if no discount</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="DurationHours" class="form-label">Duration (hours)</label>
+                                <input asp-for="DurationHours" type="number" step="0.5" min="0.5" max="24" class="form-control" />
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Inclusions -->
+                        <h5 class="mb-3"><i class="ti ti-checklist me-2"></i>What's Included</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label asp-for="IncludedPhotos" class="form-label">Included Photos</label>
+                                <input asp-for="IncludedPhotos" type="number" min="0" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="NumberOfLocations" class="form-label">Number of Locations</label>
+                                <input asp-for="NumberOfLocations" type="number" min="1" max="10" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="OutfitChanges" class="form-label">Outfit Changes</label>
+                                <input asp-for="OutfitChanges" type="number" min="0" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input asp-for="IncludesDigitalGallery" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IncludesDigitalGallery" class="form-check-label">Includes Digital Gallery</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input asp-for="IncludesAlbum" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IncludesAlbum" class="form-check-label">Includes Photo Album</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input asp-for="IncludesPrints" class="form-check-input" type="checkbox" id="includesPrints" />
+                                    <label asp-for="IncludesPrints" class="form-check-label">Includes Prints</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="numberOfPrintsGroup" style="display: none;">
+                                <label asp-for="NumberOfPrints" class="form-label">Number of Prints</label>
+                                <input asp-for="NumberOfPrints" type="number" min="0" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="IncludedFeatures" class="form-label">Additional Features (comma-separated)</label>
+                                <textarea asp-for="IncludedFeatures" class="form-control" rows="2" placeholder="e.g., Online proofing, Slideshow video, Social media images"></textarea>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Display Settings -->
+                        <h5 class="mb-3"><i class="ti ti-settings me-2"></i>Display Settings</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="CoverImagePath" class="form-label">Cover Image URL</label>
+                                <input asp-for="CoverImagePath" class="form-control" placeholder="/uploads/packages/cover.jpg" />
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="DisplayOrder" class="form-label">Display Order</label>
+                                <input asp-for="DisplayOrder" type="number" min="0" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label d-block">&nbsp;</label>
+                                <div class="form-check form-check-inline">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsActive" class="form-check-label">Active</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input asp-for="IsFeatured" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsFeatured" class="form-check-label">Featured</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Manage" class="btn btn-light">
+                                <i class="ti ti-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-check me-2"></i>Create Package
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Toggle number of prints field
+        document.getElementById('includesPrints').addEventListener('change', function() {
+            document.getElementById('numberOfPrintsGroup').style.display = this.checked ? '' : 'none';
+        });
+        // Initialize on page load
+        if (document.getElementById('includesPrints').checked) {
+            document.getElementById('numberOfPrintsGroup').style.display = '';
+        }
+    </script>
+}

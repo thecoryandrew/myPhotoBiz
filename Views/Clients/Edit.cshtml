@@ -1,29 +1,21 @@
-@using MyPhotoBiz.Models;
+@using MyPhotoBiz.ViewModels
 
-@model Client
+@model EditClientViewModel
 @{
-    ViewData["Title"] = "Edit Client";
-    ViewBag.Title = "Edit Client";
+    ViewBag.Title = "Edit";
+    ViewBag.PageTitle = "Edit Client";
     ViewBag.SubTitle = "Clients";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Clients");
+    ViewBag.Icon = "ti-user-edit";
+    ViewBag.Color = "primary";
+    ViewBag.BackUrl = Url.Action("Index", "Clients");
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">
-            <div class="d-flex align-items-sm-center flex-sm-row flex-column mb-3">
-                <div class="flex-grow-1">
-                    <h4 class="fs-xl mb-1">Edit Client</h4>
-                    <p class="text-muted mb-0">Update client information for your photography business.</p>
-                </div>
-                <div class="text-end">
-                    <a asp-action="Index" class="btn btn-light">
-                        <i class="ti ti-arrow-left me-1"></i> Back to List
-                    </a>
-                </div>
-            </div>
-
             <div class="card">
                 <div class="card-header border-light">
                     <h5 class="card-title mb-0">
@@ -76,6 +68,14 @@
                             </label>
                             <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter full address"></textarea>
                             <span asp-validation-for="Address" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label fw-semibold">
+                                <i class="ti ti-notes me-1 text-muted"></i>Notes
+                            </label>
+                            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Additional notes about this client"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger small"></span>
                         </div>
 
                         <div class="d-flex gap-2 justify-content-end">

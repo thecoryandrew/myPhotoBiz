@@ -16,29 +16,29 @@ namespace MyPhotoBiz.Services
 
         public async Task<IEnumerable<PhotoShoot>> GetAllPhotoShootsAsync() =>
             await _context.PhotoShoots
-                .Include(p => p.Client)
+                .Include(p => p.ClientProfile)
                 .OrderByDescending(p => p.ScheduledDate)
                 .ToListAsync();
 
         public async Task<PhotoShoot?> GetPhotoShootByIdAsync(int id) =>
             await _context.PhotoShoots
-                .Include(p => p.Client)
+                .Include(p => p.ClientProfile)
                 .Include(p => p.Albums)
                     .ThenInclude(a => a.Photos)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
         public async Task<IEnumerable<PhotoShoot>> GetUpcomingPhotoShootsAsync(int daysAhead = 7) =>
             await _context.PhotoShoots
-                .Include(p => p.Client)
+                .Include(p => p.ClientProfile)
                 .Where(p => p.ScheduledDate >= DateTime.Today && p.ScheduledDate <= DateTime.Today.AddDays(daysAhead))
                 .OrderBy(p => p.ScheduledDate)
                 .ToListAsync();
 
         public async Task<IEnumerable<PhotoShoot>> GetPhotoShootsByClientIdAsync(int clientId) =>
             await _context.PhotoShoots
-                .Include(p => p.Client)
+                .Include(p => p.ClientProfile)
                 .Include(p => p.Albums)
-                .Where(p => p.ClientId == clientId)
+                .Where(p => p.ClientProfileId == clientId)
                 .OrderByDescending(p => p.ScheduledDate)
                 .ToListAsync();
 
@@ -47,9 +47,9 @@ namespace MyPhotoBiz.Services
             if (shoot == null) throw new ArgumentNullException(nameof(shoot));
 
             // ✅ Ensure parent Client exists
-            var clientExists = await _context.Clients.AnyAsync(c => c.Id == shoot.ClientId);
+            var clientExists = await _context.ClientProfiles.AnyAsync(c => c.Id == shoot.ClientProfileId);
             if (!clientExists)
-                throw new InvalidOperationException($"Client with Id {shoot.ClientId} does not exist.");
+                throw new InvalidOperationException($"Client with Id {shoot.ClientProfileId} does not exist.");
 
             // ✅ Ensure Photographer exists (if provided)
             if (!string.IsNullOrEmpty(shoot.PhotographerId))
@@ -71,9 +71,9 @@ namespace MyPhotoBiz.Services
             if (existing == null) throw new InvalidOperationException("PhotoShoot not found");
 
             // ✅ Validate parent records again
-            var clientExists = await _context.Clients.AnyAsync(c => c.Id == shoot.ClientId);
+            var clientExists = await _context.ClientProfiles.AnyAsync(c => c.Id == shoot.ClientProfileId);
             if (!clientExists)
-                throw new InvalidOperationException($"Client with Id {shoot.ClientId} does not exist.");
+                throw new InvalidOperationException($"Client with Id {shoot.ClientProfileId} does not exist.");
 
             if (!string.IsNullOrEmpty(shoot.PhotographerId))
             {

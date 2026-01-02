@@ -2497,28 +2497,16 @@
       "PackagePath": "staticwebassets/scss/structure/_topbar.scss"
     },
     {
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/Supporting-Documents-Checklist(2).docx",
+      "PackagePath": "staticwebassets/uploads/Supporting-Documents-Checklist(2).docx"
+    },
+    {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/2dfbb0e9-68f0-477b-9985-95a109922eb5.jpg",
       "PackagePath": "staticwebassets/uploads/albums/1/2dfbb0e9-68f0-477b-9985-95a109922eb5.jpg"
     },
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/2dfbb0e9-68f0-477b-9985-95a109922eb5_thumb.jpg",
       "PackagePath": "staticwebassets/uploads/albums/1/2dfbb0e9-68f0-477b-9985-95a109922eb5_thumb.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/3508401c-f138-4dab-ab47-cfe342f0f1b0.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/3508401c-f138-4dab-ab47-cfe342f0f1b0.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/3508401c-f138-4dab-ab47-cfe342f0f1b0_thumb.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/3508401c-f138-4dab-ab47-cfe342f0f1b0_thumb.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/3567fc4f-5243-442a-8ced-a9cf9265d9c9.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/3567fc4f-5243-442a-8ced-a9cf9265d9c9.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/3567fc4f-5243-442a-8ced-a9cf9265d9c9_thumb.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/3567fc4f-5243-442a-8ced-a9cf9265d9c9_thumb.jpg"
     },
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/515ad601-d788-4b05-839a-7e5d29ff3777.jpg",
@@ -2537,14 +2525,6 @@
       "PackagePath": "staticwebassets/uploads/albums/1/526e0d9d-2939-4a50-b1d8-b0fb9f80da7c_thumb.jpg"
     },
     {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/56be99b8-be84-4e55-adc9-d543d73e075a.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/56be99b8-be84-4e55-adc9-d543d73e075a.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/56be99b8-be84-4e55-adc9-d543d73e075a_thumb.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/56be99b8-be84-4e55-adc9-d543d73e075a_thumb.jpg"
-    },
-    {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/6b8d47c6-a357-4d0e-ba34-22b8dcfae098.jpg",
       "PackagePath": "staticwebassets/uploads/albums/1/6b8d47c6-a357-4d0e-ba34-22b8dcfae098.jpg"
     },
@@ -2559,14 +2539,6 @@
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/72246152-f151-402f-bb3e-8ee218b65f7b_thumb.jpg",
       "PackagePath": "staticwebassets/uploads/albums/1/72246152-f151-402f-bb3e-8ee218b65f7b_thumb.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/77335355-c418-4e5d-80ad-0563e2c2d36f.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/77335355-c418-4e5d-80ad-0563e2c2d36f.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/77335355-c418-4e5d-80ad-0563e2c2d36f_thumb.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/77335355-c418-4e5d-80ad-0563e2c2d36f_thumb.jpg"
     },
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/7c75190f-60c6-4594-a2c8-9fc4a46cccd1.jpg",
@@ -2641,20 +2613,12 @@
       "PackagePath": "staticwebassets/uploads/albums/1/c63c9cd7-cdc5-4f54-9e6e-08693ec08a78_thumb.jpg"
     },
     {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/d934e4b3-69ec-462e-8ccf-6ede216a5481.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/d934e4b3-69ec-462e-8ccf-6ede216a5481.jpg"
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/77745f62-4c32-4494-9608-e3ed1947a1aa.jpg",
+      "PackagePath": "staticwebassets/uploads/albums/2/77745f62-4c32-4494-9608-e3ed1947a1aa.jpg"
     },
     {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/d934e4b3-69ec-462e-8ccf-6ede216a5481_thumb.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/d934e4b3-69ec-462e-8ccf-6ede216a5481_thumb.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/db055bdc-4564-4185-98c5-da08e50092e1.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/db055bdc-4564-4185-98c5-da08e50092e1.jpg"
-    },
-    {
-      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/1/db055bdc-4564-4185-98c5-da08e50092e1_thumb.jpg",
-      "PackagePath": "staticwebassets/uploads/albums/1/db055bdc-4564-4185-98c5-da08e50092e1_thumb.jpg"
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/77745f62-4c32-4494-9608-e3ed1947a1aa_thumb.jpg",
+      "PackagePath": "staticwebassets/uploads/albums/2/77745f62-4c32-4494-9608-e3ed1947a1aa_thumb.jpg"
     },
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/788c0e4d-18e8-445f-8b6b-4d13f9bc3891.jpg",
@@ -2663,6 +2627,22 @@
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/788c0e4d-18e8-445f-8b6b-4d13f9bc3891_thumb.jpg",
       "PackagePath": "staticwebassets/uploads/albums/2/788c0e4d-18e8-445f-8b6b-4d13f9bc3891_thumb.jpg"
+    },
+    {
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/ba3e436d-8164-4b32-931b-c1f790e23b40.jpg",
+      "PackagePath": "staticwebassets/uploads/albums/2/ba3e436d-8164-4b32-931b-c1f790e23b40.jpg"
+    },
+    {
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/ba3e436d-8164-4b32-931b-c1f790e23b40_thumb.jpg",
+      "PackagePath": "staticwebassets/uploads/albums/2/ba3e436d-8164-4b32-931b-c1f790e23b40_thumb.jpg"
+    },
+    {
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/d1427f75-2ddf-40a1-9fb7-085be925f49e.jpg",
+      "PackagePath": "staticwebassets/uploads/albums/2/d1427f75-2ddf-40a1-9fb7-085be925f49e.jpg"
+    },
+    {
+      "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/2/d1427f75-2ddf-40a1-9fb7-085be925f49e_thumb.jpg",
+      "PackagePath": "staticwebassets/uploads/albums/2/d1427f75-2ddf-40a1-9fb7-085be925f49e_thumb.jpg"
     },
     {
       "Id": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/wwwroot/uploads/albums/4/079ff78a-71b6-4945-97ec-7e613e76c823.JPG",

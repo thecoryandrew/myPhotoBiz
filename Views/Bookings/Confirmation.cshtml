@@ -1,0 +1,80 @@
+@using MyPhotoBiz.Models
+@model BookingRequest
+@{
+    ViewBag.Title = "Booking Confirmed";
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <div class="avatar avatar-xl bg-success-subtle text-success rounded-circle mx-auto mb-4">
+                        <i class="ti ti-check fs-1"></i>
+                    </div>
+
+                    <h2 class="mb-3">Booking Request Submitted!</h2>
+                    <p class="text-muted mb-4">
+                        Thank you for your booking request. We'll review it and get back to you within 24 hours.
+                    </p>
+
+                    <div class="bg-light rounded p-4 mb-4">
+                        <h5 class="text-muted mb-2">Your Booking Reference</h5>
+                        <h3 class="text-primary mb-0">@Model.BookingReference</h3>
+                    </div>
+
+                    <div class="text-start">
+                        <h6 class="text-muted mb-3">Booking Summary</h6>
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Event Type</span>
+                                <span class="fw-semibold">@Model.EventType</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Preferred Date</span>
+                                <span class="fw-semibold">@Model.PreferredDate.ToString("MMMM dd, yyyy")</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Time</span>
+                                <span class="fw-semibold">@Model.PreferredStartTime.ToString(@"hh\:mm")</span>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Location</span>
+                                <span class="fw-semibold">@Model.Location</span>
+                            </li>
+                            @if (Model.ServicePackage != null)
+                            {
+                                <li class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Package</span>
+                                    <span class="fw-semibold">@Model.ServicePackage.Name</span>
+                                </li>
+                            }
+                            @if (Model.EstimatedPrice.HasValue)
+                            {
+                                <li class="d-flex justify-content-between py-2">
+                                    <span class="text-muted">Estimated Price</span>
+                                    <span class="fw-semibold text-success">@Model.EstimatedPrice.Value.ToString("C")</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-grid gap-2">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-action="MyBookings" class="btn btn-primary">
+                                <i class="ti ti-list me-2"></i>View My Bookings
+                            </a>
+                        }
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-light">
+                            <i class="ti ti-home me-2"></i>Return to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

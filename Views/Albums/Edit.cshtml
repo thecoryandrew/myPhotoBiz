@@ -2,30 +2,58 @@
 @model MyPhotoBiz.ViewModels.Album.AlbumViewModel
 
 @{
-    ViewData["Title"] = "Edit Album";
+    ViewBag.Title = "Edit";
+    ViewBag.PageTitle = "Edit Album";
+    ViewBag.SubTitle = "Albums";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Albums");
+    ViewBag.Icon = "ti-folder-edit";
+    ViewBag.Color = "success";
+    ViewBag.BackUrl = Url.Action("Details", "PhotoShoots", new { id = Model.PhotoShootId });
+    ViewBag.BackText = "Back to Shoot";
 }
 
-<h2>Edit Album for "@Model.PhotoShootTitle"</h2>
+<div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
 
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="PhotoShootId" />
+    <div class="row justify-content-center">
+        <div class="col-xxl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ti ti-folder-edit me-2"></i>Edit Album for "@Model.PhotoShootTitle"
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="PhotoShootId" />
 
-    <div class="form-group mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label">Album Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a asp-action="Details" asp-controller="PhotoShoots" asp-route-id="@Model.PhotoShootId" class="btn btn-light">
+                                <i class="ti ti-x me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-check me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="form-group mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-    <a asp-action="Details" asp-controller="PhotoShoots" asp-route-id="@Model.PhotoShootId" class="btn btn-secondary">Cancel</a>
-</form>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

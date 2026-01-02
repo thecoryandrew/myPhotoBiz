@@ -1,0 +1,240 @@
+@using MyPhotoBiz.Models
+@model ServicePackage
+@{
+    ViewBag.Title = Model.Name;
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            @if (!string.IsNullOrEmpty(Model.CoverImagePath))
+            {
+                <img src="@Model.CoverImagePath" class="img-fluid rounded mb-4" alt="@Model.Name" style="max-height: 400px; width: 100%; object-fit: cover;">
+            }
+
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <span class="badge bg-secondary mb-2">@Model.Category</span>
+                    @if (Model.IsFeatured)
+                    {
+                        <span class="badge bg-primary mb-2 ms-2"><i class="ti ti-star me-1"></i>Popular</span>
+                    }
+                    <h1 class="mb-2">@Model.Name</h1>
+                </div>
+                @if (Model.HasDiscount)
+                {
+                    <span class="badge bg-danger fs-6">@Model.DiscountPercentage% OFF</span>
+                }
+            </div>
+
+            <p class="lead text-muted">@Model.Description</p>
+
+            @if (!string.IsNullOrEmpty(Model.DetailedDescription))
+            {
+                <div class="mt-4">
+                    <h5>About This Package</h5>
+                    <p>@Model.DetailedDescription</p>
+                </div>
+            }
+
+            <!-- What's Included -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="ti ti-checklist me-2"></i>What's Included</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-primary-subtle text-primary rounded-circle me-3">
+                                    <i class="ti ti-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">@Model.DurationHours Hours</h6>
+                                    <small class="text-muted">Session duration</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-primary-subtle text-primary rounded-circle me-3">
+                                    <i class="ti ti-photo"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">@Model.IncludedPhotos Photos</h6>
+                                    <small class="text-muted">Professionally edited</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-primary-subtle text-primary rounded-circle me-3">
+                                    <i class="ti ti-map-pin"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">@Model.NumberOfLocations Location(s)</h6>
+                                    <small class="text-muted">Shooting locations</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (Model.OutfitChanges.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm bg-primary-subtle text-primary rounded-circle me-3">
+                                        <i class="ti ti-shirt"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">@Model.OutfitChanges Outfit Changes</h6>
+                                        <small class="text-muted">Wardrobe changes</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.IncludesDigitalGallery)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm bg-success-subtle text-success rounded-circle me-3">
+                                        <i class="ti ti-check"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Digital Gallery</h6>
+                                        <small class="text-muted">Online viewing & download</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.IncludesAlbum)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm bg-success-subtle text-success rounded-circle me-3">
+                                        <i class="ti ti-check"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Photo Album</h6>
+                                        <small class="text-muted">Printed album included</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.IncludesPrints && Model.NumberOfPrints > 0)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm bg-success-subtle text-success rounded-circle me-3">
+                                        <i class="ti ti-check"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">@Model.NumberOfPrints Prints</h6>
+                                        <small class="text-muted">Professional prints</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (Model.FeaturesList.Any())
+                    {
+                        <hr class="my-4" />
+                        <h6>Additional Features</h6>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var feature in Model.FeaturesList)
+                            {
+                                <li class="mb-2">
+                                    <i class="ti ti-check text-success me-2"></i>@feature
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            <!-- Add-ons -->
+            @if (Model.AddOns.Any(a => a.IsActive))
+            {
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="ti ti-plus me-2"></i>Available Add-ons</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach (var addon in Model.AddOns.Where(a => a.IsActive))
+                            {
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">@addon.Name</h6>
+                                                <small class="text-muted">@addon.Description</small>
+                                            </div>
+                                            <span class="badge bg-primary-subtle text-primary">+@addon.Price.ToString("C")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <!-- Pricing -->
+                    <div class="text-center mb-4">
+                        @if (Model.HasDiscount)
+                        {
+                            <p class="text-decoration-line-through text-muted mb-1">@Model.BasePrice.ToString("C")</p>
+                            <h2 class="text-success mb-0">@Model.EffectivePrice.ToString("C")</h2>
+                            <small class="text-success">You save @((Model.BasePrice - Model.EffectivePrice).ToString("C"))</small>
+                        }
+                        else
+                        {
+                            <h2 class="mb-0">@Model.BasePrice.ToString("C")</h2>
+                        }
+                    </div>
+
+                    <hr />
+
+                    <!-- Quick Info -->
+                    <ul class="list-unstyled mb-4">
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Duration</span>
+                            <span class="fw-semibold">@Model.DurationHours hours</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Photos</span>
+                            <span class="fw-semibold">@Model.IncludedPhotos</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Locations</span>
+                            <span class="fw-semibold">@Model.NumberOfLocations</span>
+                        </li>
+                    </ul>
+
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Bookings" asp-action="Book" asp-route-packageId="@Model.Id"
+                           class="btn btn-primary btn-lg">
+                            <i class="ti ti-calendar me-2"></i>Book This Package
+                        </a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="ti ti-arrow-left me-2"></i>View All Packages
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

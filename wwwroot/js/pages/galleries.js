@@ -68,18 +68,18 @@ function showSessions(id) {
     });
 }
 
-// Show Regenerate Code Modal
-function showRegenerateCodeModal(id) {
+// Show Manage Access Modal
+function showManageAccessModal(id) {
     $.ajax({
-        url: `/Galleries/RegenerateCode/${id}`,
+        url: `/Galleries/ManageAccess/${id}`,
         type: 'GET',
         success: function (result) {
-            $('#regenerateCodeModal').html(result);
-            const modal = new bootstrap.Modal(document.getElementById('regenerateCodeModalElement'));
+            $('#manageAccessModal').html(result);
+            const modal = new bootstrap.Modal(document.getElementById('manageAccessModalElement'));
             modal.show();
         },
         error: function (xhr, status, error) {
-            showToast('Error', 'Failed to load regenerate code form.', 'error');
+            showToast('Error', 'Failed to load access management form.', 'error');
             console.error('Error:', error);
         }
     });

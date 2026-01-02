@@ -1,0 +1,161 @@
+@using MyPhotoBiz.Models
+@model IEnumerable<ServicePackage>
+@{
+    ViewBag.Title = "Manage Packages";
+    ViewBag.PageTitle = "Package Management";
+    ViewBag.Icon = "ti-package";
+    ViewBag.Color = "info";
+}
+
+<div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-11">
+            <div class="card">
+                <div class="card-header border-light justify-content-between">
+                    <div class="d-flex gap-2">
+                        <div class="app-search">
+                            <input type="text" class="form-control" placeholder="Search packages..." id="searchInput">
+                            <i data-lucide="search" class="app-search-icon text-muted"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-action="AddOns" class="btn btn-outline-primary me-2">
+                            <i class="ti ti-puzzle me-1"></i>Manage Add-ons
+                        </a>
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="ti ti-plus me-1"></i>New Package
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-custom table-centered table-hover w-100 mb-0">
+                        <thead class="bg-light bg-opacity-25 thead-sm">
+                            <tr class="text-uppercase fs-xxs">
+                                <th>Package</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Duration</th>
+                                <th>Photos</th>
+                                <th>Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var package in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar avatar-sm">
+                                                <span class="avatar-title bg-info-subtle text-info rounded-circle">
+                                                    <i class="ti ti-package"></i>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">
+                                                    @package.Name
+                                                    @if (package.IsFeatured)
+                                                    {
+                                                        <i class="ti ti-star text-warning ms-1" title="Featured"></i>
+                                                    }
+                                                </h6>
+                                                <small class="text-muted">@package.AddOns.Count add-ons</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-secondary">@package.Category</span></td>
+                                    <td>
+                                        @if (package.HasDiscount)
+                                        {
+                                            <span class="text-decoration-line-through text-muted me-1">@package.BasePrice.ToString("C")</span>
+                                            <span class="text-success fw-semibold">@package.EffectivePrice.ToString("C")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold">@package.BasePrice.ToString("C")</span>
+                                        }
+                                    </td>
+                                    <td>@package.DurationHours hrs</td>
+                                    <td>@package.IncludedPhotos</td>
+                                    <td>
+                                        @if (package.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <a asp-action="Details" asp-route-id="@package.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="View" target="_blank">
+                                                <i class="ti ti-eye fs-lg"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@package.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Edit">
+                                                <i class="ti ti-edit fs-lg"></i>
+                                            </a>
+                                            <a asp-action="AddOns" asp-route-packageId="@package.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Add-ons">
+                                                <i class="ti ti-puzzle fs-lg"></i>
+                                            </a>
+                                            <form asp-action="ToggleActive" asp-route-id="@package.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-light btn-icon btn-sm rounded-circle" title="@(package.IsActive ? "Deactivate" : "Activate")">
+                                                    <i class="ti ti-@(package.IsActive ? "eye-off" : "eye") fs-lg"></i>
+                                                </button>
+                                            </form>
+                                            <form asp-action="ToggleFeatured" asp-route-id="@package.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-light btn-icon btn-sm rounded-circle" title="@(package.IsFeatured ? "Unfeature" : "Feature")">
+                                                    <i class="ti ti-star@(package.IsFeatured ? "-filled text-warning" : "") fs-lg"></i>
+                                                </button>
+                                            </form>
+                                            <form asp-action="Delete" asp-route-id="@package.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this package?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-light btn-icon btn-sm rounded-circle" title="Delete">
+                                                    <i class="ti ti-trash fs-lg text-danger"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (!Model.Any())
+                {
+                    <div class="card-body text-center py-5">
+                        <div class="avatar avatar-xl bg-light rounded-circle mx-auto mb-3">
+                            <i class="ti ti-package fs-1 text-muted"></i>
+                        </div>
+                        <h5>No Packages Yet</h5>
+                        <p class="text-muted mb-4">Create your first photography package.</p>
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="ti ti-plus me-2"></i>Create Package
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script>
+        // Simple search filter
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        });
+    </script>
+}

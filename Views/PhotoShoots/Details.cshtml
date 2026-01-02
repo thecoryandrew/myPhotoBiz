@@ -3,11 +3,18 @@
 
 @model PhotoShoot
 @{
-    ViewData["Title"] = "Photo Shoot Details";
+    ViewBag.Title = Model.Title;
+    ViewBag.PageTitle = "Photo Shoot Details";
+    ViewBag.SubTitle = "Photo Shoots";
+    ViewBag.SubTitleUrl = Url.Action("Index", "PhotoShoots");
+    ViewBag.Icon = "ti-camera";
+    ViewBag.Color = "warning";
+    ViewBag.BackUrl = Url.Action("Index", "PhotoShoots");
 }
 
 <div class="container-fluid">
-   @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
+
     <div class="row">
         <div class="col-md-8">
             <div class="card mb-3">
@@ -28,7 +35,7 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Client:</strong></div>
-                        <div class="col-sm-9">@Model.Client.FirstName @Model.Client.LastName</div>
+                        <div class="col-sm-9">@Model.ClientProfile?.User?.FirstName @Model.ClientProfile?.User?.LastName</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Start Date & Time:</strong></div>

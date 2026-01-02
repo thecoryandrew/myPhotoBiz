@@ -6,7 +6,6 @@
             <form asp-action="Edit" asp-route-id="@Model.Id" method="post" id="editGalleryForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="ClientCode" />
                 <input type="hidden" asp-for="CreatedDate" />
 
                 <div class="modal-header">
@@ -45,13 +44,6 @@
                                     <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label asp-for="ClientPassword" class="form-label">Client Password</label>
-                                    <input asp-for="ClientPassword" type="text" class="form-control" placeholder="Leave blank to keep current">
-                                    <span asp-validation-for="ClientPassword" class="text-danger small"></span>
-                                    <small class="text-muted">Leave blank to keep the current password</small>
-                                </div>
-
                                 <div class="col-12">
                                     <label asp-for="Description" class="form-label">Description <span class="text-danger">*</span></label>
                                     <textarea asp-for="Description" class="form-control" rows="3"></textarea>
@@ -75,9 +67,7 @@
                                 <div class="col-12">
                                     <div class="alert alert-info">
                                         <i class="ti ti-info-circle me-2"></i>
-                                        <strong>Access Code:</strong> <code>@Model.ClientCode</code>
-                                        <br />
-                                        <small>To change access codes, use the "Regenerate Access Codes" button in the gallery details.</small>
+                                        <strong>Client Access:</strong> Client access is managed through the gallery details page.
                                     </div>
                                 </div>
                             </div>

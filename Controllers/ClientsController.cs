@@ -8,45 +8,48 @@ using MyPhotoBiz.Data;
 using MyPhotoBiz.Models;
 using MyPhotoBiz.Services;
 using MyPhotoBiz.Helpers;
+using MyPhotoBiz.ViewModels;
 
 namespace MyPhotoBiz.Controllers
 {
-    //[Authorize]
     public class ClientsController : Controller
     {
         private readonly IClientService _clientService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IActivityService _activityService;
 
-        public ClientsController(IClientService clientService, UserManager<ApplicationUser> userManager, ApplicationDbContext context)
+        public ClientsController(IClientService clientService, UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context, IActivityService activityService)
         {
             _clientService = clientService;
             _userManager = userManager;
             _context = context;
+            _activityService = activityService;
         }
 
-        private MyPhotoBiz.ViewModels.ClientDetailsViewModel MapToClientDetailsViewModel(Client client)
+        private ClientDetailsViewModel MapToClientDetailsViewModel(ClientProfile clientProfile)
         {
-            return new MyPhotoBiz.ViewModels.ClientDetailsViewModel
+            return new ClientDetailsViewModel
             {
-                Id = client.Id,
-                FirstName = client.FirstName,
-                LastName = client.LastName,
-                Email = client.Email,
-                PhoneNumber = client.PhoneNumber,
-                Address = client.Address,
-                Notes = client.Notes,
-                UpdatedDate = client.UpdatedDate,
-                CreatedDate = client.CreatedDate,
-                User = client.User,
-                PhotoShootCount = client.PhotoShoots?.Count ?? 0,
-                InvoiceCount = client.Invoices?.Count ?? 0,
-                TotalRevenue = client.Invoices?.Sum(i => i.Amount + i.Tax) ?? 0m,
-                PhotoShoots = client.PhotoShoots?.Select(ps => new MyPhotoBiz.ViewModels.PhotoShootViewModel
+                Id = clientProfile.Id,
+                FirstName = clientProfile.User?.FirstName ?? "",
+                LastName = clientProfile.User?.LastName ?? "",
+                Email = clientProfile.User?.Email ?? "",
+                PhoneNumber = clientProfile.PhoneNumber,
+                Address = clientProfile.Address,
+                Notes = clientProfile.Notes,
+                UpdatedDate = clientProfile.UpdatedDate,
+                CreatedDate = clientProfile.CreatedDate,
+                User = clientProfile.User,
+                PhotoShootCount = clientProfile.PhotoShoots?.Count ?? 0,
+                InvoiceCount = clientProfile.Invoices?.Count ?? 0,
+                TotalRevenue = clientProfile.Invoices?.Sum(i => i.Amount + i.Tax) ?? 0m,
+                PhotoShoots = clientProfile.PhotoShoots?.Select(ps => new PhotoShootViewModel
                 {
                     Id = ps.Id,
                     Title = ps.Title,
-                    ClientId = ps.ClientId,
+                    ClientId = ps.ClientProfileId,
                     ScheduledDate = ps.ScheduledDate,
                     UpdatedDate = ps.UpdatedDate,
                     Location = ps.Location,
@@ -55,9 +58,9 @@ namespace MyPhotoBiz.Controllers
                     Notes = ps.Notes,
                     DurationHours = ps.DurationHours,
                     DurationMinutes = ps.DurationMinutes
-                }).ToList() ?? new List<MyPhotoBiz.ViewModels.PhotoShootViewModel>(),
-                Invoices = client.Invoices?.ToList() ?? new List<MyPhotoBiz.Models.Invoice>(),
-                ClientBadges = client.ClientBadges?.ToList() ?? new List<MyPhotoBiz.Models.ClientBadge>()
+                }).ToList() ?? new List<PhotoShootViewModel>(),
+                Invoices = clientProfile.Invoices?.ToList() ?? new List<Invoice>(),
+                ClientBadges = clientProfile.ClientBadges?.ToList() ?? new List<ClientBadge>()
             };
         }
 
@@ -71,13 +74,13 @@ namespace MyPhotoBiz.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int id)
         {
-            var client = await _clientService.GetClientByIdAsync(id);
-            if (client == null)
+            var clientProfile = await _clientService.GetClientByIdAsync(id);
+            if (clientProfile == null)
             {
                 return NotFound();
             }
 
-            var model = MapToClientDetailsViewModel(client);
+            var model = MapToClientDetailsViewModel(clientProfile);
             return View("Details", model);
         }
 
@@ -90,25 +93,25 @@ namespace MyPhotoBiz.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(Client client)
+        public async Task<IActionResult> Create(CreateClientViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var existingUser = await _userManager.FindByEmailAsync(client.Email);
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
                 if (existingUser != null)
                 {
                     ModelState.AddModelError("Email", "A user with this email already exists.");
-                    return View(client);
+                    return View(model);
                 }
 
                 var temporaryPassword = PasswordGenerator.GenerateSecurePassword();
 
                 var user = new ApplicationUser
                 {
-                    UserName = client.Email,
-                    Email = client.Email,
-                    FirstName = client.FirstName,
-                    LastName = client.LastName,
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
                     EmailConfirmed = false
                 };
 
@@ -117,13 +120,25 @@ namespace MyPhotoBiz.Controllers
                 {
                     await _userManager.AddToRoleAsync(user, "Client");
 
-                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    // Create ClientProfile
+                    var clientProfile = new ClientProfile
+                    {
+                        UserId = user.Id,
+                        PhoneNumber = model.PhoneNumber,
+                        Address = model.Address,
+                        Notes = model.Notes ?? string.Empty,
+                        CreatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.UtcNow
+                    };
 
-                    client.UserId = user.Id;
-                    await _clientService.CreateClientAsync(client);
+                    await _clientService.CreateClientAsync(clientProfile);
 
                     // Auto-award "New User" badge
-                    await AwardNewUserBadgeAsync(client.Id);
+                    await AwardNewUserBadgeAsync(clientProfile.Id);
+
+                    // Log activity
+                    await _activityService.LogActivityAsync("Created", "Client", clientProfile.Id,
+                        $"{model.FirstName} {model.LastName}", null, _userManager.GetUserId(User));
 
                     TempData["SuccessMessage"] = $"Client created successfully. Temporary password: {temporaryPassword}";
                     TempData["PasswordWarning"] = "Please share this password securely with the client. It will not be shown again.";
@@ -136,47 +151,83 @@ namespace MyPhotoBiz.Controllers
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
-            return View(client);
+            return View(model);
         }
 
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
-            var client = await _clientService.GetClientByIdAsync(id);
-            if (client == null)
+            var clientProfile = await _clientService.GetClientByIdAsync(id);
+            if (clientProfile == null)
             {
                 return NotFound();
             }
-            return View(client);
+
+            var model = new EditClientViewModel
+            {
+                Id = clientProfile.Id,
+                FirstName = clientProfile.User?.FirstName ?? "",
+                LastName = clientProfile.User?.LastName ?? "",
+                Email = clientProfile.User?.Email ?? "",
+                PhoneNumber = clientProfile.PhoneNumber,
+                Address = clientProfile.Address,
+                Notes = clientProfile.Notes
+            };
+
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, Client client)
+        public async Task<IActionResult> Edit(int id, EditClientViewModel model)
         {
-            if (id != client.Id)
+            if (id != model.Id)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
-                await _clientService.UpdateClientAsync(client);
+                var clientProfile = await _clientService.GetClientByIdAsync(id);
+                if (clientProfile == null)
+                {
+                    return NotFound();
+                }
+
+                // Update ApplicationUser fields
+                if (clientProfile.User != null)
+                {
+                    clientProfile.User.FirstName = model.FirstName;
+                    clientProfile.User.LastName = model.LastName;
+                    await _userManager.UpdateAsync(clientProfile.User);
+                }
+
+                // Update ClientProfile fields
+                clientProfile.PhoneNumber = model.PhoneNumber;
+                clientProfile.Address = model.Address;
+                clientProfile.Notes = model.Notes ?? string.Empty;
+
+                await _clientService.UpdateClientAsync(clientProfile);
+
+                // Log activity
+                await _activityService.LogActivityAsync("Updated", "Client", clientProfile.Id,
+                    $"{model.FirstName} {model.LastName}", null, _userManager.GetUserId(User));
+
                 return RedirectToAction(nameof(Index));
             }
-            return View(client);
+            return View(model);
         }
 
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var client = await _clientService.GetClientByIdAsync(id);
-            if (client == null)
+            var clientProfile = await _clientService.GetClientByIdAsync(id);
+            if (clientProfile == null)
             {
                 return NotFound();
             }
-            return View(client);
+            return View(clientProfile);
         }
 
         [HttpPost, ActionName("Delete")]
@@ -184,7 +235,17 @@ namespace MyPhotoBiz.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var clientProfile = await _clientService.GetClientByIdAsync(id);
+            var clientName = clientProfile != null
+                ? $"{clientProfile.User?.FirstName} {clientProfile.User?.LastName}"
+                : $"ID: {id}";
+
             await _clientService.DeleteClientAsync(id);
+
+            // Log activity
+            await _activityService.LogActivityAsync("Deleted", "Client", id,
+                clientName, null, _userManager.GetUserId(User));
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -192,17 +253,34 @@ namespace MyPhotoBiz.Controllers
         public async Task<IActionResult> MyProfile()
         {
             var userId = _userManager.GetUserId(User);
-            var client = await _clientService.GetClientByUserIdAsync(userId!);
-            if (client == null)
+            var clientProfile = await _clientService.GetClientByUserIdAsync(userId!);
+            if (clientProfile == null)
             {
                 return NotFound();
             }
 
-            var model = MapToClientDetailsViewModel(client);
+            var model = MapToClientDetailsViewModel(clientProfile);
             return View(model);
         }
 
-        private async Task AwardNewUserBadgeAsync(int clientId)
+        // API endpoint for getting clients list (used by manage access modal)
+        [HttpGet]
+        [Route("api/clients")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetClientsApi()
+        {
+            var clients = await _clientService.GetAllClientsAsync();
+            var result = clients.Select(c => new
+            {
+                id = c.Id,
+                firstName = c.User?.FirstName ?? "",
+                lastName = c.User?.LastName ?? "",
+                email = c.User?.Email ?? ""
+            });
+            return Json(result);
+        }
+
+        private async Task AwardNewUserBadgeAsync(int clientProfileId)
         {
             try
             {
@@ -215,7 +293,7 @@ namespace MyPhotoBiz.Controllers
 
                 // Check if client already has this badge
                 var hasBadge = await _context.ClientBadges
-                    .AnyAsync(cb => cb.ClientId == clientId && cb.BadgeId == newUserBadge.Id);
+                    .AnyAsync(cb => cb.ClientProfileId == clientProfileId && cb.BadgeId == newUserBadge.Id);
 
                 if (hasBadge)
                     return; // Already has the badge
@@ -223,7 +301,7 @@ namespace MyPhotoBiz.Controllers
                 // Award the badge
                 var clientBadge = new ClientBadge
                 {
-                    ClientId = clientId,
+                    ClientProfileId = clientProfileId,
                     BadgeId = newUserBadge.Id,
                     EarnedDate = DateTime.UtcNow,
                     Notes = "Auto-awarded on account creation"

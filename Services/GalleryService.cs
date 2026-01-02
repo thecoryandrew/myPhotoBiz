@@ -11,6 +11,17 @@ using System.Threading.Tasks;
 
 namespace MyPhotoBiz.Services
 {
+    // TODO: [HIGH-PERF] GetAllGalleriesAsync loads all photos into memory for counting - use SQL COUNT
+    // TODO: [HIGH-PERF] GetGalleryDetailsAsync line 75 loads all photos without pagination
+    // TODO: [HIGH-PERF] Multiple SelectMany().Count() calls cause N+1 queries
+    // TODO: [HIGH] GetGalleryAccessUrlAsync returns generic URL - needs gallery-specific token/slug
+    // TODO: [HIGH] GrantAccessAsync hardcodes all permissions to true - should be configurable
+    // TODO: [MEDIUM] GetGalleryStatsAsync loads entire photo collection to count - use SQL
+    // TODO: [MEDIUM] Add gallery photo pagination support
+    // TODO: [MEDIUM] Add gallery search/filtering functionality
+    // TODO: [FEATURE] Add public gallery sharing without login requirement
+    // TODO: [FEATURE] Add gallery expiry notification emails
+    // TODO: [FEATURE] Add download audit trail logging
     public class GalleryService : IGalleryService
     {
         private readonly ApplicationDbContext _context;
@@ -38,7 +49,6 @@ namespace MyPhotoBiz.Services
                         Id = g.Id,
                         Name = g.Name,
                         Description = g.Description,
-                        ClientCode = g.ClientCode,
                         CreatedDate = g.CreatedDate,
                         ExpiryDate = g.ExpiryDate,
                         IsActive = g.IsActive,
@@ -80,7 +90,6 @@ namespace MyPhotoBiz.Services
                     Id = gallery.Id,
                     Name = gallery.Name,
                     Description = gallery.Description,
-                    ClientCode = gallery.ClientCode,
                     CreatedDate = gallery.CreatedDate,
                     ExpiryDate = gallery.ExpiryDate,
                     IsActive = gallery.IsActive,
@@ -142,22 +151,11 @@ namespace MyPhotoBiz.Services
         {
             try
             {
-                // Generate access codes if needed
-                string clientCode = model.ClientCode ?? "";
-                string clientPassword = model.ClientPassword ?? "";
-
-                if (model.AutoGenerateCode || string.IsNullOrWhiteSpace(clientCode))
-                {
-                    (clientCode, clientPassword) = await GenerateAccessCodesAsync();
-                }
-
                 // Create gallery entity
                 var gallery = new Gallery
                 {
                     Name = model.Name,
                     Description = model.Description,
-                    ClientCode = clientCode,
-                    ClientPassword = clientPassword,
                     CreatedDate = DateTime.UtcNow,
                     ExpiryDate = model.ExpiryDate,
                     IsActive = model.IsActive,
@@ -172,6 +170,15 @@ namespace MyPhotoBiz.Services
                 if (model.SelectedAlbumIds.Any())
                 {
                     await AddAlbumsToGalleryAsync(gallery.Id, model.SelectedAlbumIds);
+                }
+
+                // Grant access to selected clients
+                if (model.SelectedClientProfileIds?.Any() == true)
+                {
+                    foreach (var clientProfileId in model.SelectedClientProfileIds)
+                    {
+                        await GrantAccessAsync(gallery.Id, clientProfileId);
+                    }
                 }
 
                 _logger.LogInformation($"Gallery created: {gallery.Name} (ID: {gallery.Id})");
@@ -203,11 +210,6 @@ namespace MyPhotoBiz.Services
                 gallery.BrandColor = model.BrandColor;
                 gallery.IsActive = model.IsActive;
 
-                // Update password if provided
-                if (!string.IsNullOrWhiteSpace(model.ClientPassword))
-                {
-                    gallery.ClientPassword = model.ClientPassword;
-                }
 
                 // Update album associations
                 var currentAlbumIds = gallery.Albums.Select(a => a.Id).ToList();
@@ -298,86 +300,114 @@ namespace MyPhotoBiz.Services
             }
         }
 
-        public async Task<(string clientCode, string clientPassword)> GenerateAccessCodesAsync()
-        {
-            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Exclude similar looking characters
-            const int codeLength = 8;
-            const int passwordLength = 12;
-
-            string clientCode;
-            string clientPassword;
-
-            // Generate unique client code
-            do
-            {
-                clientCode = GenerateRandomString(chars, codeLength);
-            }
-            while (await _context.Galleries.AnyAsync(g => g.ClientCode == clientCode));
-
-            // Generate password
-            clientPassword = GenerateRandomString(chars + "abcdefghijklmnopqrstuvwxyz!@#$%", passwordLength);
-
-            return (clientCode, clientPassword);
-        }
-
-        private static string GenerateRandomString(string chars, int length)
-        {
-            var stringBuilder = new StringBuilder(length);
-            var randomBytes = new byte[length];
-
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomBytes);
-            }
-
-            foreach (var b in randomBytes)
-            {
-                stringBuilder.Append(chars[b % chars.Length]);
-            }
-
-            return stringBuilder.ToString();
-        }
-
-        public async Task<(string clientCode, string clientPassword)> RegenerateAccessCodesAsync(int galleryId)
+        // Grant gallery access to a client
+        public async Task<GalleryAccess> GrantAccessAsync(int galleryId, int clientProfileId, DateTime? expiryDate = null)
         {
             try
             {
-                var gallery = await _context.Galleries.FindAsync(galleryId);
+                // Check if access already exists
+                var existingAccess = await _context.GalleryAccesses
+                    .FirstOrDefaultAsync(ga => ga.GalleryId == galleryId && ga.ClientProfileId == clientProfileId);
 
-                if (gallery == null)
-                    throw new InvalidOperationException($"Gallery not found: {galleryId}");
+                if (existingAccess != null)
+                {
+                    // Reactivate if previously revoked
+                    existingAccess.IsActive = true;
+                    existingAccess.ExpiryDate = expiryDate;
+                    await _context.SaveChangesAsync();
+                    return existingAccess;
+                }
 
-                var (newCode, newPassword) = await GenerateAccessCodesAsync();
+                var access = new GalleryAccess
+                {
+                    GalleryId = galleryId,
+                    ClientProfileId = clientProfileId,
+                    GrantedDate = DateTime.UtcNow,
+                    ExpiryDate = expiryDate,
+                    IsActive = true,
+                    CanDownload = true,
+                    CanProof = true,
+                    CanOrder = true
+                };
 
-                gallery.ClientCode = newCode;
-                gallery.ClientPassword = newPassword;
-
+                _context.GalleryAccesses.Add(access);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Access codes regenerated for gallery: {gallery.Name} (ID: {galleryId})");
+                _logger.LogInformation($"Access granted for gallery {galleryId} to client profile {clientProfileId}");
 
-                return (newCode, newPassword);
+                return access;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error regenerating access codes for gallery ID: {galleryId}");
+                _logger.LogError(ex, $"Error granting access for gallery {galleryId} to client profile {clientProfileId}");
                 throw;
             }
         }
 
-        public async Task<bool> ValidateAccessCodesAsync(string clientCode, string clientPassword)
+        // Revoke gallery access from a client
+        public async Task<bool> RevokeAccessAsync(int galleryId, int clientProfileId)
         {
             try
             {
-                return await _context.Galleries
-                    .AnyAsync(g => g.ClientCode == clientCode &&
-                                   g.ClientPassword == clientPassword &&
-                                   g.IsActive &&
-                                   g.ExpiryDate > DateTime.UtcNow);
+                var access = await _context.GalleryAccesses
+                    .FirstOrDefaultAsync(ga => ga.GalleryId == galleryId && ga.ClientProfileId == clientProfileId);
+
+                if (access == null)
+                    return false;
+
+                access.IsActive = false;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Access revoked for gallery {galleryId} from client profile {clientProfileId}");
+
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error validating access codes");
+                _logger.LogError(ex, $"Error revoking access for gallery {galleryId} from client profile {clientProfileId}");
+                throw;
+            }
+        }
+
+        // Validate if a user has access to a gallery
+        public async Task<bool> ValidateUserAccessAsync(int galleryId, string userId)
+        {
+            try
+            {
+                var clientProfile = await _context.ClientProfiles
+                    .FirstOrDefaultAsync(cp => cp.UserId == userId);
+
+                if (clientProfile == null)
+                    return false;
+
+                return await _context.GalleryAccesses
+                    .AnyAsync(ga => ga.GalleryId == galleryId &&
+                                    ga.ClientProfileId == clientProfile.Id &&
+                                    ga.IsActive &&
+                                    (!ga.ExpiryDate.HasValue || ga.ExpiryDate > DateTime.UtcNow));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error validating user access for gallery {galleryId}");
+                throw;
+            }
+        }
+
+        // Get all clients with access to a gallery
+        public async Task<IEnumerable<GalleryAccess>> GetGalleryAccessesAsync(int galleryId)
+        {
+            try
+            {
+                return await _context.GalleryAccesses
+                    .Include(ga => ga.ClientProfile)
+                        .ThenInclude(cp => cp.User)
+                    .Where(ga => ga.GalleryId == galleryId)
+                    .OrderByDescending(ga => ga.GrantedDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving gallery accesses for gallery {galleryId}");
                 throw;
             }
         }
@@ -455,7 +485,8 @@ namespace MyPhotoBiz.Services
             {
                 var query = _context.Albums
                     .Include(a => a.Photos)
-                    .Include(a => a.Client)
+                    .Include(a => a.ClientProfile)
+                        .ThenInclude(cp => cp.User)
                     .Include(a => a.Galleries)
                     .AsQueryable();
 
@@ -468,7 +499,9 @@ namespace MyPhotoBiz.Services
                         Name = a.Name,
                         Description = a.Description,
                         PhotoCount = a.Photos.Count,
-                        ClientName = a.Client != null ? $"{a.Client.FirstName} {a.Client.LastName}" : null,
+                        ClientName = a.ClientProfile != null && a.ClientProfile.User != null
+                            ? $"{a.ClientProfile.User.FirstName} {a.ClientProfile.User.LastName}"
+                            : null,
                         IsSelected = currentGalleryId.HasValue && a.Galleries.Any(g => g.Id == currentGalleryId.Value)
                     })
                     .ToListAsync();

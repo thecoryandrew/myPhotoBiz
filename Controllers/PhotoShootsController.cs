@@ -10,21 +10,34 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Controllers
 {
+    // TODO: [HIGH] Calendar Move action doesn't update EndTime field
+    // TODO: [HIGH] CreateAjax/UpdateAjax lack server-side validation
+    // TODO: [HIGH] Uses PhotographerId (string) but should use PhotographerProfileId (int)
+    // TODO: [MEDIUM] Add past date validation when creating/updating shoots
+    // TODO: [MEDIUM] Calendar GetEvents doesn't include PhotographerProfile for display
+    // TODO: [MEDIUM] Add conflict detection for overlapping shoots
+    // TODO: [FEATURE] Add drag-to-create in calendar view
+    // TODO: [FEATURE] Add color coding by shoot type/status
+    // TODO: [FEATURE] Add travel time calculation between shoots
+    // TODO: [FEATURE] Add recurring shoot support
     [Authorize(Roles = "Admin,Photographer")]
     public class PhotoShootsController : Controller
     {
         private readonly IPhotoShootService _photoShootService;
         private readonly IClientService _clientService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IActivityService _activityService;
 
         public PhotoShootsController(
             IPhotoShootService photoShootService,
             IClientService clientService,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IActivityService activityService)
         {
             _photoShootService = photoShootService;
             _clientService = clientService;
             _userManager = userManager;
+            _activityService = activityService;
         }
 
         // =====================================================
@@ -49,8 +62,8 @@ namespace MyPhotoBiz.Controllers
             if (User.IsInRole("Client") && !User.IsInRole("Admin") && !User.IsInRole("Photographer"))
             {
                 var userId = _userManager.GetUserId(User);
-                var client = await _clientService.GetClientByUserIdAsync(userId!);
-                if (client == null || shoot.ClientId != client.Id)
+                var clientProfile = await _clientService.GetClientByUserIdAsync(userId!);
+                if (clientProfile == null || shoot.ClientProfileId != clientProfile.Id)
                     return Forbid();
             }
 
@@ -71,7 +84,7 @@ namespace MyPhotoBiz.Controllers
                 Clients = clients.Select(c => new SelectListItem
                 {
                     Value = c.Id.ToString(),
-                    Text = $"{c.FirstName} {c.LastName}",
+                    Text = $"{c.User?.FirstName} {c.User?.LastName}",
                     Selected = clientId.HasValue && c.Id == clientId.Value
                 }).ToList()
             };
@@ -96,7 +109,7 @@ namespace MyPhotoBiz.Controllers
             var shoot = new PhotoShoot
             {
                 Title = model.Title!,
-                ClientId = model.ClientId,
+                ClientProfileId = model.ClientId,
                 PhotographerId = _userManager.GetUserId(User)!,
                 ScheduledDate = model.ScheduledDate,
                 EndTime = model.EndTime,
@@ -125,7 +138,7 @@ namespace MyPhotoBiz.Controllers
             {
                 Id = shoot.Id,
                 Title = shoot.Title,
-                ClientId = shoot.ClientId,
+                ClientId = shoot.ClientProfileId,
                 ScheduledDate = shoot.ScheduledDate,
                 EndTime = shoot.EndTime,
                 DurationHours = shoot.DurationHours,
@@ -136,8 +149,8 @@ namespace MyPhotoBiz.Controllers
                 Clients = clients.Select(c => new SelectListItem
                 {
                     Value = c.Id.ToString(),
-                    Text = $"{c.FirstName} {c.LastName}",
-                    Selected = c.Id == shoot.ClientId
+                    Text = $"{c.User?.FirstName} {c.User?.LastName}",
+                    Selected = c.Id == shoot.ClientProfileId
                 }).ToList()
             };
 
@@ -162,7 +175,7 @@ namespace MyPhotoBiz.Controllers
             var duration = (model.EndTime - model.ScheduledDate).TotalHours;
 
             shoot.Title = model.Title!;
-            shoot.ClientId = model.ClientId;
+            shoot.ClientProfileId = model.ClientId;
             shoot.ScheduledDate = model.ScheduledDate;
             shoot.EndTime = model.EndTime;
             shoot.DurationHours = (int)Math.Round(duration);
@@ -220,10 +233,10 @@ namespace MyPhotoBiz.Controllers
         public async Task<IActionResult> MyPhotoShoots()
         {
             var userId = _userManager.GetUserId(User);
-            var client = await _clientService.GetClientByUserIdAsync(userId!);
-            if (client == null) return NotFound();
+            var clientProfile = await _clientService.GetClientByUserIdAsync(userId!);
+            if (clientProfile == null) return NotFound();
 
-            var shoots = await _photoShootService.GetPhotoShootsByClientIdAsync(client.Id);
+            var shoots = await _photoShootService.GetPhotoShootsByClientIdAsync(clientProfile.Id);
             return View(shoots);
         }
 
@@ -234,7 +247,7 @@ namespace MyPhotoBiz.Controllers
             model.Clients = clients.Select(c => new SelectListItem
             {
                 Value = c.Id.ToString(),
-                Text = $"{c.FirstName} {c.LastName}",
+                Text = $"{c.User?.FirstName} {c.User?.LastName}",
                 Selected = c.Id == model.ClientId
             }).ToList();
         }
@@ -263,7 +276,7 @@ namespace MyPhotoBiz.Controllers
                 {
                     description = ps.Description,
                     location = ps.Location,
-                    clientId = ps.ClientId,
+                    clientId = ps.ClientProfileId,
                     photographerId = ps.PhotographerId,
                     price = ps.Price,
                     notes = ps.Notes,
@@ -307,7 +320,7 @@ namespace MyPhotoBiz.Controllers
                 Status = dto.Status,
                 Price = dto.Price,
                 Notes = dto.Notes,
-                ClientId = dto.ClientId,
+                ClientProfileId = dto.ClientId,
                 PhotographerId = dto.PhotographerId,
                 CreatedDate = DateTime.Now
             };
@@ -333,7 +346,7 @@ namespace MyPhotoBiz.Controllers
             shoot.Status = dto.Status;
             shoot.Price = dto.Price;
             shoot.Notes = dto.Notes;
-            shoot.ClientId = dto.ClientId;
+            shoot.ClientProfileId = dto.ClientId;
             shoot.PhotographerId = dto.PhotographerId;
             shoot.UpdatedDate = DateTime.Now;
 
@@ -364,7 +377,7 @@ namespace MyPhotoBiz.Controllers
             var result = clients.Select(c => new
             {
                 id = c.Id,
-                name = $"{c.FirstName} {c.LastName}"
+                name = $"{c.User?.FirstName} {c.User?.LastName}"
             });
 
             return Json(result);

@@ -1,3 +1,14 @@
+@*
+    TODO: [HIGH] Add pending bookings card with action items
+    TODO: [HIGH] Add contracts awaiting signature alert
+    TODO: [HIGH] Add overdue invoices warning with aging
+    TODO: [MEDIUM] Add today's schedule summary
+    TODO: [MEDIUM] Add recent activity timeline
+    TODO: [MEDIUM] Add quick action buttons (new booking, new client, etc.)
+    TODO: [FEATURE] Add comparison metrics (vs last month/year)
+    TODO: [UI] Chart.js loaded from CDN - consider local hosting for security
+    TODO: [UI] Add mobile-responsive breakpoints for stat cards
+*@
 @using MyPhotoBiz.Models;
 @using MyPhotoBiz.Enums;
 
@@ -150,7 +161,7 @@
                                         </div>
                                         <h6 class="mb-1">@shoot.Title</h6>
                                         <div class="small text-muted">
-                                            <i class="ti ti-user me-1"></i>@shoot.Client?.FullName
+                                            <i class="ti ti-user me-1"></i>@shoot.ClientProfile?.User?.FirstName @shoot.ClientProfile?.User?.LastName
                                         </div>
                                     </div>
                                     <div class="flex-shrink-0">

@@ -1,16 +1,17 @@
 @model MyPhotoBiz.ViewModels.EditContractViewModel
 
 @{
-    ViewData["Title"] = "Edit Contract";
+    ViewBag.Title = "Edit";
+    ViewBag.PageTitle = "Edit Contract";
+    ViewBag.SubTitle = "Contracts";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Contracts");
+    ViewBag.Icon = "ti-edit";
+    ViewBag.Color = "info";
+    ViewBag.BackUrl = Url.Action("Index", "Contracts");
 }
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="ti ti-edit me-2"></i>Edit Contract</h2>
-        <a asp-action="Index" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i> Back to List
-        </a>
-    </div>
+    <partial name="Partials/_PageTitle" />
 
     <div class="row">
         <div class="col-lg-8">

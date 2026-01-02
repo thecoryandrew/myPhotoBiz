@@ -1,12 +1,15 @@
 @model MyPhotoBiz.Models.Photo
 @{
-    ViewBag.Title = "View Photo";
-    ViewBag.SubTitle = Model.FileName;
+    ViewBag.Title = Model.FileName;
+    ViewBag.PageTitle = "Photo Details";
+    ViewBag.SubTitle = "Albums";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Albums");
+    ViewBag.Icon = "ti-photo";
+    ViewBag.Color = "success";
 }
 
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">
@@ -83,7 +86,7 @@
                                 <div>
                                     <p class="text-muted small mb-0">Client</p>
                                     <p class="mb-0 fw-semibold">
-                                        @Model.Album.PhotoShoot.Client.FirstName @Model.Album.PhotoShoot.Client.LastName
+                                        @Model.Album.PhotoShoot.ClientProfile?.User?.FirstName @Model.Album.PhotoShoot.ClientProfile?.User?.LastName
                                     </p>
                                 </div>
                             </div>

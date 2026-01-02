@@ -1,18 +1,17 @@
 @model IEnumerable<MyPhotoBiz.Models.Contract>
 
 @{
-    ViewData["Title"] = "Contracts";
+    ViewBag.Title = "Contracts";
+    ViewBag.PageTitle = "Contract Management";
+    ViewBag.Icon = "ti-file-text";
+    ViewBag.Color = "info";
+    ViewBag.ActionUrl = Url.Action("Create", "Contracts");
+    ViewBag.ActionText = "New Contract";
+    ViewBag.ActionIcon = "ti-plus";
 }
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="ti ti-file-text me-2"></i>Contracts</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> New Contract
-        </a>
-    </div>
-
-    @* TempData messages handled by SweetAlert2 toasts in layout *@
+    <partial name="Partials/_PageTitle" />
 
     <div class="card">
         <div class="card-body">
@@ -38,9 +37,9 @@
                                         <strong>@contract.Title</strong>
                                     </td>
                                     <td>
-                                        @if (contract.Client != null)
+                                        @if (contract.ClientProfile?.User != null)
                                         {
-                                            <span>@contract.Client.FullName</span>
+                                            <span>@contract.ClientProfile.User.FirstName @contract.ClientProfile.User.LastName</span>
                                         }
                                         else
                                         {

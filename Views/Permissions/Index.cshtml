@@ -1,34 +1,25 @@
 @model MyPhotoBiz.ViewModels.PermissionsIndexViewModel
 @{
     ViewBag.Title = "Permissions";
-    ViewBag.SubTitle = "Users";
+    ViewBag.PageTitle = "Permission Management";
+    ViewBag.Icon = "ti-lock";
+    ViewBag.Color = "secondary";
 }
 
 @section styles
 {
 }
 <div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
 
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
-
-    @* TempData messages handled by SweetAlert2 toasts in layout *@
-
-    <div class="row justify-content-center">
-        <div class="col-xxl-10">
-
-            <div class="d-flex align-items-sm-center flex-sm-row flex-column mb-3">
-                <div class="flex-grow-1">
-                    <h4 class="fs-xl mb-1">Manage Permissions</h4>
-                    <p class="text-muted mb-0">Control access to features and functionality across your application.</p>
-                </div>
-
-                <div class="text-end">
-                    <a href="javascript:void(0);" class="btn btn-success create-permission-btn">
-                        <i class="ti ti-plus me-1"></i> Add New Permission
-                    </a>
-                </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">All Permissions</h5>
+                <a href="javascript:void(0);" class="btn btn-success create-permission-btn">
+                    <i class="ti ti-plus me-1"></i> Add New Permission
+                </a>
             </div>
-
             <div data-table data-table-rows-per-page="8" class="card">
                 <div class="card-header border-light justify-content-between">
                     <div class="d-flex gap-2">
@@ -132,7 +123,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 @Html.AntiForgeryToken()

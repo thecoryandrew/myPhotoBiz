@@ -1,0 +1,158 @@
+@using MyPhotoBiz.Models
+@model IEnumerable<ServicePackage>
+@{
+    ViewBag.Title = "Photography Packages";
+    Layout = "_Layout";
+    var categories = ViewBag.Categories as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var currentCategory = ViewBag.CurrentCategory as string;
+}
+
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold">Our Photography Packages</h1>
+        <p class="lead text-muted">Choose the perfect package for your special moments</p>
+    </div>
+
+    <!-- Category Filter -->
+    @if (categories.Any())
+    {
+        <div class="d-flex justify-content-center mb-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link @(string.IsNullOrEmpty(currentCategory) ? "active" : "")" asp-action="Index">
+                        All Packages
+                    </a>
+                </li>
+                @foreach (var category in categories)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(currentCategory == category ? "active" : "")"
+                           asp-action="Index" asp-route-category="@category">
+                            @category
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Packages Grid -->
+    <div class="row g-4">
+        @foreach (var package in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm @(package.IsFeatured ? "border-primary" : "")">
+                    @if (package.IsFeatured)
+                    {
+                        <div class="bg-primary text-white text-center py-1">
+                            <small class="fw-semibold"><i class="ti ti-star me-1"></i>Most Popular</small>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(package.CoverImagePath))
+                    {
+                        <img src="@package.CoverImagePath" class="card-img-top" alt="@package.Name" style="height: 200px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="ti ti-camera fs-1 text-muted"></i>
+                        </div>
+                    }
+
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-secondary">@package.Category</span>
+                            @if (package.HasDiscount)
+                            {
+                                <span class="badge bg-danger">@package.DiscountPercentage% OFF</span>
+                            }
+                        </div>
+
+                        <h4 class="card-title">@package.Name</h4>
+                        <p class="card-text text-muted">@package.Description</p>
+
+                        <!-- Package Features -->
+                        <ul class="list-unstyled mb-3">
+                            <li class="mb-1">
+                                <i class="ti ti-clock text-primary me-2"></i>
+                                @package.DurationHours hours
+                            </li>
+                            <li class="mb-1">
+                                <i class="ti ti-photo text-primary me-2"></i>
+                                @package.IncludedPhotos edited photos
+                            </li>
+                            @if (package.IncludesDigitalGallery)
+                            {
+                                <li class="mb-1">
+                                    <i class="ti ti-folder text-primary me-2"></i>
+                                    Digital gallery included
+                                </li>
+                            }
+                            @if (package.IncludesAlbum)
+                            {
+                                <li class="mb-1">
+                                    <i class="ti ti-book text-primary me-2"></i>
+                                    Photo album included
+                                </li>
+                            }
+                            @if (package.IncludesPrints && package.NumberOfPrints > 0)
+                            {
+                                <li class="mb-1">
+                                    <i class="ti ti-printer text-primary me-2"></i>
+                                    @package.NumberOfPrints prints included
+                                </li>
+                            }
+                        </ul>
+
+                        <!-- Pricing -->
+                        <div class="mb-3">
+                            @if (package.HasDiscount)
+                            {
+                                <span class="text-decoration-line-through text-muted me-2">@package.BasePrice.ToString("C")</span>
+                                <span class="h4 fw-bold text-success">@package.EffectivePrice.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="h4 fw-bold">@package.BasePrice.ToString("C")</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 pb-4">
+                        <div class="d-grid gap-2">
+                            <a asp-action="Details" asp-route-id="@package.Id" class="btn btn-outline-primary">
+                                View Details
+                            </a>
+                            <a asp-controller="Bookings" asp-action="Book" asp-route-packageId="@package.Id"
+                               class="btn btn-primary">
+                                Book Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="avatar avatar-xl bg-light rounded-circle mx-auto mb-3">
+                <i class="ti ti-package fs-1 text-muted"></i>
+            </div>
+            <h5>No Packages Available</h5>
+            <p class="text-muted">Check back soon for our photography packages.</p>
+        </div>
+    }
+
+    <!-- Call to Action -->
+    <div class="text-center mt-5 pt-5 border-top">
+        <h4>Need a Custom Package?</h4>
+        <p class="text-muted mb-4">Contact us to discuss your specific requirements</p>
+        <a asp-controller="Bookings" asp-action="Book" class="btn btn-lg btn-outline-primary">
+            <i class="ti ti-message me-2"></i>Get in Touch
+        </a>
+    </div>
+</div>

@@ -1,16 +1,30 @@
 ﻿@{
-    var title = ViewBag.Title;
-    var subtitle = ViewBag.SubTitle;
+    var title = ViewBag.Title as string ?? "Page";
+    var pageTitle = ViewBag.PageTitle as string ?? title;
+    var subtitle = ViewBag.SubTitle as string;
+    var subtitleUrl = ViewBag.SubTitleUrl as string;
+    var icon = ViewBag.Icon as string ?? "ti-file";
+    var color = ViewBag.Color as string ?? "primary";
+    var backUrl = ViewBag.BackUrl as string;
+    var backText = ViewBag.BackText as string ?? "Back to List";
+    var actionUrl = ViewBag.ActionUrl as string;
+    var actionText = ViewBag.ActionText as string;
+    var actionIcon = ViewBag.ActionIcon as string ?? "ti-plus";
+    var actionColor = ViewBag.ActionColor as string ?? "primary";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="fs-sm text-uppercase fw-bold m-0">@title</h4>
+        <h4 class="fs-lg text-uppercase fw-bold m-0">@title</h4>
     </div>
 
-    <div class="text-end">
+
+    <!-- Adding a break between title and breadcrumb -->
+    <br />
+
+    <div class="text-start"> <!-- Changed to text-start for left alignment -->
         <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Home</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">myPhotoBiz</a></li>
             @if (!string.IsNullOrEmpty(subtitle))
             {
                 <li class="breadcrumb-item"><a href="javascript: void(0);">@subtitle</a></li>

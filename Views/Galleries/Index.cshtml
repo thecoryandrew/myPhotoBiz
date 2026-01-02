@@ -1,24 +1,12 @@
 @model MyPhotoBiz.ViewModels.GalleriesIndexViewModel
 @{
-    ViewData["Title"] = "Gallery Management";
+    ViewBag.Title = "Galleries";
+    ViewBag.PageTitle = "Gallery Management";
+    ViewBag.Icon = "ti-photo-album";
+    ViewBag.Color = "info";
 }
 
-<!-- Page Header with Breadcrumb -->
-<div class="card bg-info-subtle mb-3">
-    <div class="card-body">
-        <div class="d-flex align-items-center">
-            <div class="flex-grow-1">
-                <h4 class="mb-1"><i class="ti ti-photo-album me-2"></i>Gallery Management</h4>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Dashboard">Home</a></li>
-                        <li class="breadcrumb-item active">Galleries</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-    </div>
-</div>
+<partial name="Partials/_PageTitle" />
 
 <!-- Stats Cards Row -->
 <div class="row mb-4">
@@ -131,7 +119,6 @@
                 <thead class="table-light">
                     <tr>
                         <th data-table-sort="name">Gallery Name</th>
-                        <th data-table-sort="clientCode">Access Code</th>
                         <th data-table-sort="status">Status</th>
                         <th data-table-sort="expiryDate">Expires</th>
                         <th class="text-center">Photos</th>
@@ -146,17 +133,10 @@
                         <tr data-table-row
                             data-status="@gallery.Status"
                             data-name="@gallery.Name"
-                            data-clientCode="@gallery.ClientCode"
-                            data-search="@gallery.Name @gallery.Description @gallery.ClientCode">
+                            data-search="@gallery.Name @gallery.Description">
                             <td>
                                 <h6 class="mb-0">@gallery.Name</h6>
                                 <small class="text-muted">@gallery.Description</small>
-                            </td>
-                            <td>
-                                <code class="bg-light px-2 py-1 rounded">@gallery.ClientCode</code>
-                                <button type="button" class="btn btn-sm btn-light" onclick="copyToClipboard('@gallery.ClientCode', 'Access code')" title="Copy Code">
-                                    <i class="ti ti-copy"></i>
-                                </button>
                             </td>
                             <td>
                                 @if (gallery.Status == "Active")
@@ -244,7 +224,7 @@
 <div id="editGalleryModal"></div>
 <div id="galleryDetailsModal"></div>
 <div id="gallerySessionsModal"></div>
-<div id="regenerateCodeModal"></div>
+<div id="manageAccessModal"></div>
 
 @section Scripts {
     <script src="~/js/pages/galleries.js"></script>

@@ -28,8 +28,13 @@ namespace MyPhotoBiz.Models
         {
             get => UserType == UserType.Photographer;
             set => UserType = value ? UserType.Photographer : UserType.Client;
-        }   
+        }
+
         // Full name property for convenience
         public string FullName => $"{FirstName} {LastName}";
+
+        // Profile navigation properties (1:1 relationships)
+        public virtual ClientProfile? ClientProfile { get; set; }
+        public virtual PhotographerProfile? PhotographerProfile { get; set; }
     }
 }

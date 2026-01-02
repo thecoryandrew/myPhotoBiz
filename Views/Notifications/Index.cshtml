@@ -1,11 +1,13 @@
 @model IEnumerable<MyPhotoBiz.Models.Notification>
 @{
     ViewBag.Title = "Notifications";
-    ViewBag.SubTitle = "All Notifications";
+    ViewBag.PageTitle = "Notifications";
+    ViewBag.Icon = "ti-bell";
+    ViewBag.Color = "info";
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">

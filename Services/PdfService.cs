@@ -157,15 +157,15 @@ public class PdfService : IPdfService
             html.AppendLine("<div class='row'>");
             html.AppendLine("<div class='col'>");
             html.AppendLine("<h3>Bill To</h3>");
-            if (invoice.Client != null)
+            if (invoice.ClientProfile?.User != null)
             {
-                html.AppendLine("<p><strong>" + invoice.Client.FirstName + " " + invoice.Client.LastName + "</strong></p>");
-                if (!string.IsNullOrWhiteSpace(invoice.Client.Email))
-                    html.AppendLine("<p>" + invoice.Client.Email + "</p>");
-                if (!string.IsNullOrWhiteSpace(invoice.Client.PhoneNumber))
-                    html.AppendLine("<p>" + invoice.Client.PhoneNumber + "</p>");
-                if (!string.IsNullOrWhiteSpace(invoice.Client.Address))
-                    html.AppendLine("<p>" + invoice.Client.Address + "</p>");
+                html.AppendLine("<p><strong>" + invoice.ClientProfile.User.FirstName + " " + invoice.ClientProfile.User.LastName + "</strong></p>");
+                if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.User.Email))
+                    html.AppendLine("<p>" + invoice.ClientProfile.User.Email + "</p>");
+                if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.PhoneNumber))
+                    html.AppendLine("<p>" + invoice.ClientProfile.PhoneNumber + "</p>");
+                if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.Address))
+                    html.AppendLine("<p>" + invoice.ClientProfile.Address + "</p>");
             }
             html.AppendLine("</div>");
             html.AppendLine("<div class='col text-right'>");

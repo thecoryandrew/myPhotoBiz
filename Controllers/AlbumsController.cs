@@ -71,7 +71,7 @@ namespace MyPhotoBiz.Controllers
                 // Clients can only view their own albums
                 var userId = _userManager.GetUserId(User);
                 var client = await _clientService.GetClientByUserIdAsync(userId!);
-                if (client == null || album.ClientId != client.Id)
+                if (client == null || album.ClientProfileId != client.Id)
                     return Forbid();
             }
             else
@@ -139,7 +139,7 @@ namespace MyPhotoBiz.Controllers
                 Name = model.Name,
                 Description = model.Description ?? string.Empty,
                 PhotoShootId = photoShoot.Id,
-                ClientId = photoShoot.ClientId,
+                ClientProfileId = photoShoot.ClientProfileId,
                 CreatedDate = DateTime.Now,
                 IsPublic = false
             };

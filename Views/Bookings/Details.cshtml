@@ -1,0 +1,247 @@
+@using MyPhotoBiz.Enums
+@using MyPhotoBiz.Models
+@model BookingRequest
+@{
+    ViewBag.Title = $"Booking {Model.BookingReference}";
+    ViewBag.PageTitle = $"Booking Details";
+    ViewBag.Icon = "ti-calendar-event";
+    ViewBag.Color = "primary";
+
+    var statusClass = Model.Status switch
+    {
+        BookingStatus.Pending => "warning",
+        BookingStatus.Confirmed => "success",
+        BookingStatus.Declined => "danger",
+        BookingStatus.Cancelled => "secondary",
+        BookingStatus.Completed => "info",
+        _ => "primary"
+    };
+}
+
+<div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
+
+    <div class="row">
+        <!-- Main Details -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="ti ti-calendar-event me-2"></i>@Model.BookingReference
+                    </h5>
+                    <span class="badge bg-@statusClass fs-sm">@Model.Status</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Event Type</label>
+                            <p class="fw-semibold mb-0">@Model.EventType</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Preferred Date & Time</label>
+                            <p class="fw-semibold mb-0">
+                                @Model.PreferredDate.ToString("dddd, MMMM dd, yyyy")
+                                at @Model.PreferredStartTime.ToString(@"hh\:mm")
+                            </p>
+                        </div>
+                        @if (Model.AlternativeDate.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Alternative Date</label>
+                                <p class="mb-0">@Model.AlternativeDate.Value.ToString("dddd, MMMM dd, yyyy")</p>
+                            </div>
+                        }
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Duration</label>
+                            <p class="mb-0">@Model.EstimatedDurationHours hours</p>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted">Location</label>
+                            <p class="mb-0">@Model.Location</p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.SpecialRequirements))
+                        {
+                            <div class="col-12">
+                                <label class="form-label text-muted">Special Requirements</label>
+                                <p class="mb-0">@Model.SpecialRequirements</p>
+                            </div>
+                        }
+                        @if (Model.ServicePackage != null)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Selected Package</label>
+                                <p class="fw-semibold mb-0">
+                                    @Model.ServicePackage.Name
+                                    <span class="badge bg-primary ms-2">@Model.ServicePackage.EffectivePrice.ToString("C")</span>
+                                </p>
+                            </div>
+                        }
+                        @if (Model.EstimatedPrice.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Estimated Price</label>
+                                <p class="fw-semibold text-success mb-0">@Model.EstimatedPrice.Value.ToString("C")</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Notes / Actions -->
+            @if (Model.Status == BookingStatus.Pending)
+            {
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="ti ti-settings me-2"></i>Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <form asp-action="Confirm" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@Model.Id" />
+                                    <div class="mb-3">
+                                        <label class="form-label">Admin Notes (optional)</label>
+                                        <textarea name="adminNotes" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="ti ti-check me-2"></i>Confirm Booking
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <form asp-action="Decline" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@Model.Id" />
+                                    <div class="mb-3">
+                                        <label class="form-label">Decline Reason</label>
+                                        <textarea name="reason" class="form-control" rows="2" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="ti ti-x me-2"></i>Decline Booking
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Status == BookingStatus.Confirmed && !Model.PhotoShootId.HasValue)
+            {
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <form asp-action="ConvertToShoot" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="ti ti-camera me-2"></i>Convert to Photo Shoot
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+
+            @if (Model.PhotoShootId.HasValue)
+            {
+                <div class="alert alert-success mt-3">
+                    <i class="ti ti-check-circle me-2"></i>
+                    This booking has been converted to a photo shoot.
+                    <a asp-controller="PhotoShoots" asp-action="Details" asp-route-id="@Model.PhotoShootId" class="alert-link">
+                        View Photo Shoot
+                    </a>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.DeclineReason))
+            {
+                <div class="alert alert-danger mt-3">
+                    <strong>Decline Reason:</strong> @Model.DeclineReason
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Client Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="ti ti-user me-2"></i>Client Information</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.ClientProfile?.User != null)
+                    {
+                        <p class="fw-semibold mb-1">@Model.ClientProfile.User.FirstName @Model.ClientProfile.User.LastName</p>
+                        <p class="text-muted mb-1"><i class="ti ti-mail me-1"></i>@Model.ClientProfile.User.Email</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ContactName))
+                    {
+                        <p class="mb-1"><i class="ti ti-user me-1"></i>@Model.ContactName</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ContactEmail))
+                    {
+                        <p class="mb-1"><i class="ti ti-mail me-1"></i>@Model.ContactEmail</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ContactPhone))
+                    {
+                        <p class="mb-0"><i class="ti ti-phone me-1"></i>@Model.ContactPhone</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="ti ti-clock me-2"></i>Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex gap-2 mb-2">
+                            <i class="ti ti-circle-check text-success"></i>
+                            <div>
+                                <p class="mb-0 fw-semibold">Created</p>
+                                <small class="text-muted">@Model.CreatedDate.ToString("MMM dd, yyyy HH:mm")</small>
+                            </div>
+                        </li>
+                        @if (Model.ConfirmedDate.HasValue)
+                        {
+                            <li class="d-flex gap-2 mb-2">
+                                <i class="ti ti-circle-check text-success"></i>
+                                <div>
+                                    <p class="mb-0 fw-semibold">Confirmed</p>
+                                    <small class="text-muted">@Model.ConfirmedDate.Value.ToString("MMM dd, yyyy HH:mm")</small>
+                                </div>
+                            </li>
+                        }
+                        @if (Model.DeclinedDate.HasValue)
+                        {
+                            <li class="d-flex gap-2 mb-2">
+                                <i class="ti ti-circle-x text-danger"></i>
+                                <div>
+                                    <p class="mb-0 fw-semibold">Declined</p>
+                                    <small class="text-muted">@Model.DeclinedDate.Value.ToString("MMM dd, yyyy HH:mm")</small>
+                                </div>
+                            </li>
+                        }
+                        @if (Model.CancelledDate.HasValue)
+                        {
+                            <li class="d-flex gap-2 mb-2">
+                                <i class="ti ti-circle-x text-secondary"></i>
+                                <div>
+                                    <p class="mb-0 fw-semibold">Cancelled</p>
+                                    <small class="text-muted">@Model.CancelledDate.Value.ToString("MMM dd, yyyy HH:mm")</small>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a asp-action="Index" class="btn btn-light">
+            <i class="ti ti-arrow-left me-2"></i>Back to Bookings
+        </a>
+    </div>
+</div>

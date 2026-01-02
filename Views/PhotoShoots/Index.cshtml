@@ -3,12 +3,17 @@
 @model IEnumerable<PhotoShoot>
 @{
     ViewBag.Title = "Photo Shoots";
-    ViewBag.SubTitle = "Index";
+    ViewBag.PageTitle = "Photo Shoot Management";
+    ViewBag.Icon = "ti-camera";
+    ViewBag.Color = "warning";
+    ViewBag.ActionUrl = Url.Action("Calendar", "PhotoShoots");
+    ViewBag.ActionText = "Calendar View";
+    ViewBag.ActionIcon = "ti-calendar";
+    ViewBag.ActionColor = "light";
 }
 
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">
@@ -87,7 +92,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>@shoot.Client.FirstName @shoot.Client.LastName</td>
+                                    <td>@shoot.ClientProfile?.User?.FirstName @shoot.ClientProfile?.User?.LastName</td>
                                     <td>@shoot.ScheduledDate.ToString("MMM dd, yyyy HH:mm")</td>
                                     <td>@shoot.Location</td>
                                     <td>

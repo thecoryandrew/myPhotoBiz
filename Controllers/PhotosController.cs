@@ -6,7 +6,13 @@ using MyPhotoBiz.Services;
 
 namespace MyPhotoBiz.Controllers
 {
-   // [Authorize]
+    // TODO: [CRITICAL-SECURITY] Uncomment [Authorize] - photos are currently publicly accessible!
+    // TODO: [SECURITY] Add anonymous user validation in View/Thumbnail actions - currently only checks Client role
+    // TODO: [SECURITY] Add rate limiting to prevent photo enumeration attacks
+    // TODO: [FEATURE] Add watermarking support for client-facing photos
+    // TODO: [FEATURE] Add batch download (ZIP) functionality
+    // TODO: [FEATURE] Add photo reordering UI (DisplayOrder property exists but no endpoint)
+    // [Authorize]
     public class PhotosController : Controller
     {
         private readonly IPhotoService _photoService;
@@ -88,7 +94,7 @@ namespace MyPhotoBiz.Controllers
                             ThumbnailPath = thumbPath,
                             FileSize = file.Length,
                             AlbumId = albumId,
-                            ClientId = album.PhotoShoot.ClientId,
+                            ClientProfileId = album.PhotoShoot.ClientProfileId,
                             UploadDate = DateTime.Now,
                             UploadedDate = DateTime.Now,
                             DisplayOrder = 0,
@@ -137,7 +143,7 @@ namespace MyPhotoBiz.Controllers
             {
                 var userId = _userManager.GetUserId(User);
                 var client = await _clientService.GetClientByUserIdAsync(userId!);
-                if (client == null || photo.Album.PhotoShoot.ClientId != client.Id)
+                if (client == null || photo.Album.PhotoShoot.ClientProfileId != client.Id)
                 {
                     return Forbid();
                 }
@@ -154,6 +160,46 @@ namespace MyPhotoBiz.Controllers
                 memory.Position = 0;
 
                 var mimeType = GetMimeType(photo.FilePath);
+                return File(memory, mimeType);
+            }
+
+            return NotFound();
+        }
+
+        public async Task<IActionResult> Thumbnail(int id)
+        {
+            var photo = await _photoService.GetPhotoByIdAsync(id);
+            if (photo == null)
+            {
+                return NotFound();
+            }
+
+            // Check if client can access this photo
+            if (User.IsInRole("Client"))
+            {
+                var userId = _userManager.GetUserId(User);
+                var client = await _clientService.GetClientByUserIdAsync(userId!);
+                if (client == null || photo.Album.PhotoShoot.ClientProfileId != client.Id)
+                {
+                    return Forbid();
+                }
+            }
+
+            // Return the thumbnail file, fall back to full image if thumbnail doesn't exist
+            var thumbnailPath = !string.IsNullOrEmpty(photo.ThumbnailPath) && System.IO.File.Exists(photo.ThumbnailPath)
+                ? photo.ThumbnailPath
+                : photo.FilePath;
+
+            if (System.IO.File.Exists(thumbnailPath))
+            {
+                var memory = new MemoryStream();
+                using (var stream = new FileStream(thumbnailPath, FileMode.Open, FileAccess.Read))
+                {
+                    await stream.CopyToAsync(memory);
+                }
+                memory.Position = 0;
+
+                var mimeType = GetMimeType(thumbnailPath);
                 return File(memory, mimeType);
             }
 

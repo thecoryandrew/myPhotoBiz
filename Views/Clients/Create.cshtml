@@ -1,29 +1,21 @@
-@using MyPhotoBiz.Models;
+@using MyPhotoBiz.ViewModels
 
-@model Client
+@model CreateClientViewModel
 @{
-    ViewData["Title"] = "Create Client";
-    ViewBag.Title = "Create Client";
+    ViewBag.Title = "Create";
+    ViewBag.PageTitle = "Create New Client";
     ViewBag.SubTitle = "Clients";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Clients");
+    ViewBag.Icon = "ti-user-plus";
+    ViewBag.Color = "primary";
+    ViewBag.BackUrl = Url.Action("Index", "Clients");
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">
-            <div class="d-flex align-items-sm-center flex-sm-row flex-column mb-3">
-                <div class="flex-grow-1">
-                    <h4 class="fs-xl mb-1">Create New Client</h4>
-                    <p class="text-muted mb-0">Add a new client to your photography business.</p>
-                </div>
-                <div class="text-end">
-                    <a asp-action="Index" class="btn btn-light">
-                        <i class="ti ti-arrow-left me-1"></i> Back to List
-                    </a>
-                </div>
-            </div>
-
             <div class="card">
                 <div class="card-header border-light">
                     <h5 class="card-title mb-0">

@@ -8,6 +8,17 @@ using MyPhotoBiz.ViewModels;
 
 namespace MyPhotoBiz.Controllers
 {
+    // TODO: [HIGH] Extract to ContractService - business logic shouldn't be in controller
+    // TODO: [HIGH] PendingSignature status never used - add "Send for Signature" workflow
+    // TODO: [HIGH] Expired status never used - add expiry date field and auto-expiration
+    // TODO: [HIGH] Add Contract → Invoice workflow (auto-generate invoice on signing)
+    // TODO: [MEDIUM] Add contract status transition validation (state machine)
+    // TODO: [MEDIUM] Signature validation is weak - any base64 string accepted
+    // TODO: [MEDIUM] Add contract versioning for amendments
+    // TODO: [FEATURE] Add contract templates system
+    // TODO: [FEATURE] Add e-signature integration (DocuSign, HelloSign)
+    // TODO: [FEATURE] Add multi-signature support (client + photographer)
+    // TODO: [FEATURE] Send email notification when contract is sent for signature
     // [Authorize]
     public class ContractsController : Controller
     {
@@ -25,7 +36,7 @@ namespace MyPhotoBiz.Controllers
             try
             {
                 var contracts = await _context.Contracts
-                    .Include(c => c.Client)
+                    .Include(c => c.ClientProfile).ThenInclude(cp => cp.User)
                     .Include(c => c.PhotoShoot)
                     .OrderByDescending(c => c.CreatedDate)
                     .ToListAsync();
@@ -71,7 +82,7 @@ namespace MyPhotoBiz.Controllers
                         Title = model.Title,
                         Content = model.Content,
                         PdfFilePath = pdfPath,
-                        ClientId = model.ClientId,
+                        ClientProfileId = model.ClientId,
                         PhotoShootId = model.PhotoShootId,
                         CreatedDate = DateTime.UtcNow,
                         Status = ContractStatus.Draft,
@@ -101,7 +112,7 @@ namespace MyPhotoBiz.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             var contract = await _context.Contracts
-                .Include(c => c.Client)
+                .Include(c => c.ClientProfile).ThenInclude(cp => cp.User)
                 .Include(c => c.PhotoShoot)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -113,7 +124,7 @@ namespace MyPhotoBiz.Controllers
                 Id = contract.Id,
                 Title = contract.Title,
                 Content = contract.Content ?? "",
-                ClientId = contract.ClientId,
+                ClientId = contract.ClientProfileId,
                 PhotoShootId = contract.PhotoShootId,
                 Status = contract.Status,
                 CreatedDate = contract.CreatedDate,
@@ -141,7 +152,7 @@ namespace MyPhotoBiz.Controllers
 
                     contract.Title = model.Title;
                     contract.Content = model.Content;
-                    contract.ClientId = model.ClientId;
+                    contract.ClientProfileId = model.ClientId;
                     contract.PhotoShootId = model.PhotoShootId;
                     contract.Status = model.Status;
 
@@ -165,7 +176,7 @@ namespace MyPhotoBiz.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var contract = await _context.Contracts
-                .Include(c => c.Client)
+                .Include(c => c.ClientProfile).ThenInclude(cp => cp.User)
                 .Include(c => c.PhotoShoot)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -182,9 +193,9 @@ namespace MyPhotoBiz.Controllers
                 SentDate = contract.SentDate,
                 SignatureImagePath = contract.SignatureImagePath,
                 Status = contract.Status,
-                ClientId = contract.ClientId,
-                ClientName = contract.Client?.FullName,
-                ClientEmail = contract.Client?.Email,
+                ClientId = contract.ClientProfileId,
+                ClientName = contract.ClientProfile?.User != null ? $"{contract.ClientProfile.User.FirstName} {contract.ClientProfile.User.LastName}" : null,
+                ClientEmail = contract.ClientProfile?.User?.Email,
                 PhotoShootId = contract.PhotoShootId,
                 PhotoShootTitle = contract.PhotoShoot?.Title
             };
@@ -195,7 +206,7 @@ namespace MyPhotoBiz.Controllers
         public async Task<IActionResult> Sign(int id)
         {
             var contract = await _context.Contracts
-                .Include(c => c.Client)
+                .Include(c => c.ClientProfile).ThenInclude(cp => cp.User)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (contract == null)
@@ -212,7 +223,7 @@ namespace MyPhotoBiz.Controllers
                 Id = contract.Id,
                 Title = contract.Title,
                 Content = contract.Content,
-                ClientName = contract.Client?.FullName,
+                ClientName = contract.ClientProfile?.User != null ? $"{contract.ClientProfile.User.FirstName} {contract.ClientProfile.User.LastName}" : null,
                 CreatedDate = contract.CreatedDate
             };
 
@@ -224,7 +235,7 @@ namespace MyPhotoBiz.Controllers
         public async Task<IActionResult> Sign(int id, string signatureBase64)
         {
             var contract = await _context.Contracts
-                .Include(c => c.Client)
+                .Include(c => c.ClientProfile).ThenInclude(cp => cp.User)
                 .Include(c => c.BadgeToAward)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -247,9 +258,9 @@ namespace MyPhotoBiz.Controllers
                 await _context.SaveChangesAsync();
 
                 // Award badge if configured
-                if (contract.AwardBadgeOnSign && contract.BadgeToAwardId.HasValue && contract.ClientId.HasValue)
+                if (contract.AwardBadgeOnSign && contract.BadgeToAwardId.HasValue && contract.ClientProfileId.HasValue)
                 {
-                    await AwardBadgeToClientAsync(contract.ClientId.Value, contract.BadgeToAwardId.Value, contract.Id);
+                    await AwardBadgeToClientAsync(contract.ClientProfileId.Value, contract.BadgeToAwardId.Value, contract.Id);
                     TempData["Success"] = $"Contract signed successfully! Badge '{contract.BadgeToAward?.Name}' awarded!";
                 }
                 else
@@ -323,14 +334,15 @@ namespace MyPhotoBiz.Controllers
 
         private async Task<List<ClientSelectionViewModel>> GetClientsAsync()
         {
-            return await _context.Clients
-                .OrderBy(c => c.FirstName)
-                .ThenBy(c => c.LastName)
+            return await _context.ClientProfiles
+                .Include(c => c.User)
+                .OrderBy(c => c.User.FirstName)
+                .ThenBy(c => c.User.LastName)
                 .Select(c => new ClientSelectionViewModel
                 {
                     Id = c.Id,
-                    FullName = $"{c.FirstName} {c.LastName}",
-                    Email = c.Email,
+                    FullName = $"{c.User.FirstName} {c.User.LastName}",
+                    Email = c.User.Email,
                     PhoneNumber = c.PhoneNumber
                 })
                 .ToListAsync();
@@ -339,14 +351,14 @@ namespace MyPhotoBiz.Controllers
         private async Task<List<PhotoShootSelectionViewModel>> GetPhotoShootsAsync()
         {
             return await _context.PhotoShoots
-                .Include(ps => ps.Client)
+                .Include(ps => ps.ClientProfile).ThenInclude(cp => cp.User)
                 .OrderByDescending(ps => ps.ScheduledDate)
                 .Select(ps => new PhotoShootSelectionViewModel
                 {
                     Id = ps.Id,
                     Title = ps.Title,
                     ShootDate = ps.ScheduledDate,
-                    ClientName = $"{ps.Client.FirstName} {ps.Client.LastName}"
+                    ClientName = $"{ps.ClientProfile.User.FirstName} {ps.ClientProfile.User.LastName}"
                 })
                 .ToListAsync();
         }
@@ -389,17 +401,17 @@ namespace MyPhotoBiz.Controllers
             return $"/uploads/contracts/{fileName}";
         }
 
-        private async Task AwardBadgeToClientAsync(int clientId, int badgeId, int? contractId = null)
+        private async Task AwardBadgeToClientAsync(int clientProfileId, int badgeId, int? contractId = null)
         {
             // Check if client already has this badge
             var existingBadge = await _context.ClientBadges
-                .FirstOrDefaultAsync(cb => cb.ClientId == clientId && cb.BadgeId == badgeId);
+                .FirstOrDefaultAsync(cb => cb.ClientProfileId == clientProfileId && cb.BadgeId == badgeId);
 
             if (existingBadge == null)
             {
                 var clientBadge = new ClientBadge
                 {
-                    ClientId = clientId,
+                    ClientProfileId = clientProfileId,
                     BadgeId = badgeId,
                     ContractId = contractId,
                     EarnedDate = DateTime.UtcNow,
@@ -409,7 +421,7 @@ namespace MyPhotoBiz.Controllers
                 _context.ClientBadges.Add(clientBadge);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Badge {badgeId} awarded to client {clientId}");
+                _logger.LogInformation($"Badge {badgeId} awarded to client profile {clientProfileId}");
             }
         }
     }

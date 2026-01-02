@@ -188,13 +188,9 @@
                     <!-- Access Info Tab -->
                     <div class="tab-pane fade" id="access" role="tabpanel">
                         <div class="alert alert-info">
-                            <h6><i class="ti ti-key me-2"></i>Client Access Code</h6>
-                            <div class="d-flex align-items-center">
-                                <code class="fs-4 me-3">@Model.ClientCode</code>
-                                <button type="button" class="btn btn-sm btn-primary" onclick="copyToClipboard('@Model.ClientCode', 'Access code')">
-                                    <i class="ti ti-copy me-1"></i> Copy Code
-                                </button>
-                            </div>
+                            <h6><i class="ti ti-users me-2"></i>Client Access</h6>
+                            <p class="mb-0">Clients access this gallery by logging in with their account.
+                            Use the "Manage Access" button to grant or revoke access for specific clients.</p>
                         </div>
 
                         <div class="alert alert-success">
@@ -208,12 +204,12 @@
                         </div>
 
                         <div class="mt-3">
-                            <button type="button" class="btn btn-warning" onclick="showRegenerateCodeModal(@Model.Id)">
-                                <i class="ti ti-refresh me-1"></i> Regenerate Access Codes
+                            <button type="button" class="btn btn-primary" onclick="showManageAccessModal(@Model.Id)">
+                                <i class="ti ti-users-plus me-1"></i> Manage Client Access
                             </button>
                             <small class="text-muted d-block mt-2">
-                                <i class="ti ti-alert-circle me-1"></i>
-                                Regenerating codes will invalidate the current access code. All existing client sessions will remain active.
+                                <i class="ti ti-info-circle me-1"></i>
+                                Grant or revoke gallery access for specific clients. Clients must log in with their account to view this gallery.
                             </small>
                         </div>
                     </div>

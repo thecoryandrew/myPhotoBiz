@@ -1,12 +1,15 @@
 @model MyPhotoBiz.ViewModels.Album.AlbumViewModel
 @{
-    ViewBag.Title = "Album Details";
-    ViewBag.SubTitle = Model.Name;
+    ViewBag.Title = Model.Name;
+    ViewBag.PageTitle = "Album Details";
+    ViewBag.SubTitle = "Albums";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Albums");
+    ViewBag.Icon = "ti-folder";
+    ViewBag.Color = "success";
 }
 
 <div class="container-fluid">
-
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">

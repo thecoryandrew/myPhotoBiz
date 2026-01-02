@@ -35,11 +35,11 @@
                                 <input type="checkbox" class="photo-select-checkbox form-check-input" data-photo-id="@photo.Id" />
                             </div>
                         }
-                        <a asp-controller="Photos" asp-action="View" asp-route-id="@photo.Id" 
-                           data-lightbox="gallery" 
+                        <a asp-controller="Photos" asp-action="View" asp-route-id="@photo.Id"
+                           data-lightbox="gallery"
                            class="d-block photo-link">
-                            <img src="@Url.Action("View", "Photos", new { id = photo.Id })" 
-                                 class="card-img-top photo-thumbnail" 
+                            <img src="@Url.Action("Thumbnail", "Photos", new { id = photo.Id })"
+                                 class="card-img-top photo-thumbnail"
                                  alt="@photo.FileName"
                                  loading="lazy">
                         </a>

@@ -28,11 +28,11 @@ namespace MyPhotoBiz.Models
         public int? BadgeToAwardId { get; set; }
 
         // Foreign keys
-        public int? ClientId { get; set; }
+        public int? ClientProfileId { get; set; }
         public int? PhotoShootId { get; set; }
 
         // Navigation properties
-        public virtual Client? Client { get; set; }
+        public virtual ClientProfile? ClientProfile { get; set; }
         public virtual PhotoShoot? PhotoShoot { get; set; }
         public virtual Badge? BadgeToAward { get; set; }
         public virtual ICollection<ClientBadge> ClientBadges { get; set; } = new List<ClientBadge>();

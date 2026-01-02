@@ -30,8 +30,8 @@ namespace MyPhotoBiz.Models
         public virtual Album Album { get; set; } = null!;
 
         // New properties for client association
-        public int ClientId { get; set; }
-        public virtual Client Client { get; set; } = null!;
+        public int ClientProfileId { get; set; }
+        public virtual ClientProfile ClientProfile { get; set; } = null!;
 
         public string? Title { get; set; } = string.Empty;
         public string? FullImagePath { get; set; }

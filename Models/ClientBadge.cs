@@ -4,8 +4,8 @@ namespace MyPhotoBiz.Models
     {
         public int Id { get; set; }
 
-        public int ClientId { get; set; }
-        public virtual Client Client { get; set; } = null!;
+        public int ClientProfileId { get; set; }
+        public virtual ClientProfile ClientProfile { get; set; } = null!;
 
         public int BadgeId { get; set; }
         public virtual Badge Badge { get; set; } = null!;

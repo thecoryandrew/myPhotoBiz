@@ -1,0 +1,168 @@
+@using MyPhotoBiz.Enums
+@using MyPhotoBiz.Models
+@model IEnumerable<BookingRequest>
+@{
+    ViewBag.Title = "Booking Requests";
+    ViewBag.PageTitle = "Booking Management";
+    ViewBag.Icon = "ti-calendar-event";
+    ViewBag.Color = "primary";
+    var currentStatus = ViewBag.CurrentStatus as BookingStatus?;
+    var pendingCount = ViewBag.PendingCount as int? ?? 0;
+}
+
+<div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
+
+    <!-- Status Filter Tabs -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <ul class="nav nav-pills gap-2">
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == null ? "active" : "")" asp-action="Index">
+                        All Bookings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == BookingStatus.Pending ? "active" : "")" asp-action="Index" asp-route-status="@BookingStatus.Pending">
+                        Pending
+                        @if (pendingCount > 0)
+                        {
+                            <span class="badge bg-warning text-dark ms-1">@pendingCount</span>
+                        }
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == BookingStatus.Confirmed ? "active" : "")" asp-action="Index" asp-route-status="@BookingStatus.Confirmed">
+                        Confirmed
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == BookingStatus.Declined ? "active" : "")" asp-action="Index" asp-route-status="@BookingStatus.Declined">
+                        Declined
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == BookingStatus.Completed ? "active" : "")" asp-action="Index" asp-route-status="@BookingStatus.Completed">
+                        Completed
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-11">
+            <div data-table data-table-rows-per-page="10" class="card">
+                <div class="card-header border-light justify-content-between">
+                    <div class="d-flex gap-2">
+                        <div class="app-search">
+                            <input data-table-search type="text" class="form-control" placeholder="Search bookings...">
+                            <i data-lucide="search" class="app-search-icon text-muted"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-custom table-centered table-hover w-100 mb-0">
+                        <thead class="bg-light bg-opacity-25 thead-sm">
+                            <tr class="text-uppercase fs-xxs">
+                                <th data-table-sort="reference">Reference</th>
+                                <th data-table-sort>Client</th>
+                                <th data-table-sort>Event Type</th>
+                                <th data-table-sort>Preferred Date</th>
+                                <th data-table-sort>Package</th>
+                                <th data-table-sort>Status</th>
+                                <th data-table-sort>Created</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model)
+                            {
+                                var statusClass = booking.Status switch
+                                {
+                                    BookingStatus.Pending => "warning",
+                                    BookingStatus.Confirmed => "success",
+                                    BookingStatus.Declined => "danger",
+                                    BookingStatus.Cancelled => "secondary",
+                                    BookingStatus.Completed => "info",
+                                    _ => "primary"
+                                };
+                                <tr>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@booking.Id" class="fw-semibold link-primary">
+                                            @booking.BookingReference
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @(booking.ClientProfile?.User?.FirstName) @(booking.ClientProfile?.User?.LastName)
+                                        @if (!string.IsNullOrEmpty(booking.ContactEmail))
+                                        {
+                                            <br /><small class="text-muted">@booking.ContactEmail</small>
+                                        }
+                                    </td>
+                                    <td>@booking.EventType</td>
+                                    <td>
+                                        @booking.PreferredDate.ToString("MMM dd, yyyy")
+                                        <br /><small class="text-muted">@booking.PreferredStartTime.ToString(@"hh\:mm")</small>
+                                    </td>
+                                    <td>
+                                        @if (booking.ServicePackage != null)
+                                        {
+                                            <span class="badge bg-light text-dark">@booking.ServicePackage.Name</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@statusClass">@booking.Status</span>
+                                    </td>
+                                    <td>@booking.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <a asp-action="Details" asp-route-id="@booking.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="View Details">
+                                                <i class="ti ti-eye fs-lg"></i>
+                                            </a>
+                                            @if (booking.Status == BookingStatus.Pending)
+                                            {
+                                                <form asp-action="Confirm" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-success btn-icon btn-sm rounded-circle" title="Confirm">
+                                                        <i class="ti ti-check fs-lg"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                            @if (booking.Status == BookingStatus.Confirmed && !booking.PhotoShootId.HasValue)
+                                            {
+                                                <form asp-action="ConvertToShoot" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-primary btn-icon btn-sm rounded-circle" title="Convert to Photo Shoot">
+                                                        <i class="ti ti-camera fs-lg"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-footer border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div data-table-pagination-info="bookings"></div>
+                        <div data-table-pagination></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script src="~/js/pages/custom-table.js"></script>
+}

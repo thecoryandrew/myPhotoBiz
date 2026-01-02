@@ -1,11 +1,16 @@
 @model MyPhotoBiz.ViewModels.InvoiceViewModel
 @{
-    ViewBag.Title = "Invoice Details";
-    ViewBag.SubTitle = Model.InvoiceNumber;
+    ViewBag.Title = Model.InvoiceNumber;
+    ViewBag.PageTitle = "Invoice Details";
+    ViewBag.SubTitle = "Invoices";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Invoices");
+    ViewBag.Icon = "ti-file-invoice";
+    ViewBag.Color = "danger";
+    ViewBag.BackUrl = Url.Action("Index", "Invoices");
 }
 
 <div class="container-fluid">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_PageTitle.cshtml")
+    <partial name="Partials/_PageTitle" />
 
     <div class="row justify-content-center">
         <div class="col-xxl-10">

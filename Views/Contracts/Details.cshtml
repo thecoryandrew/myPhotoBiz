@@ -1,23 +1,20 @@
 @model MyPhotoBiz.ViewModels.ContractDetailsViewModel
 
 @{
-    ViewData["Title"] = "Contract Details";
+    ViewBag.Title = Model.Title;
+    ViewBag.PageTitle = "Contract Details";
+    ViewBag.SubTitle = "Contracts";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Contracts");
+    ViewBag.Icon = "ti-file-text";
+    ViewBag.Color = "info";
+    ViewBag.ActionUrl = Url.Action("Edit", "Contracts", new { id = Model.Id });
+    ViewBag.ActionText = "Edit";
+    ViewBag.ActionIcon = "ti-edit";
+    ViewBag.BackUrl = Url.Action("Index", "Contracts");
 }
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="ti ti-file-text me-2"></i>Contract Details</h2>
-        <div>
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
-                <i class="ti ti-edit me-1"></i> Edit
-            </a>
-            <a asp-action="Index" class="btn btn-outline-secondary">
-                <i class="ti ti-arrow-left me-1"></i> Back to List
-            </a>
-        </div>
-    </div>
-
-    @* TempData messages handled by SweetAlert2 toasts in layout *@
+    <partial name="Partials/_PageTitle" />
 
     <div class="row">
         <div class="col-lg-8">

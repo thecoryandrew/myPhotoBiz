@@ -1,147 +1,162 @@
 // Controllers/GalleryController.cs
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyPhotoBiz.Data;
 using MyPhotoBiz.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using MyPhotoBiz.Services;
 
 namespace MyPhotoBiz.Controllers
 {
-    [AllowAnonymous] // Gallery accessible to clients via session token
+    [Authorize(Roles = "Client")]
     public class GalleryController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<GalleryController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IGalleryService _galleryService;
 
-        public GalleryController(ApplicationDbContext context, ILogger<GalleryController> logger)
+        public GalleryController(
+            ApplicationDbContext context,
+            ILogger<GalleryController> logger,
+            UserManager<ApplicationUser> userManager,
+            IGalleryService galleryService)
         {
             _context = context;
             _logger = logger;
+            _userManager = userManager;
+            _galleryService = galleryService;
         }
 
         /// <summary>
-        /// Display gallery login page
+        /// Display list of accessible galleries for the logged-in client
         /// </summary>
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
-        }
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+                return RedirectToAction("Login", "Account");
 
-        /// <summary>
-        /// Authenticate and create gallery session
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AccessGallery(string clientCode, string clientPassword)
-        {
-            try
+            var clientProfile = await _context.ClientProfiles
+                .FirstOrDefaultAsync(cp => cp.UserId == userId);
+
+            if (clientProfile == null)
             {
-                if (string.IsNullOrWhiteSpace(clientCode) || string.IsNullOrWhiteSpace(clientPassword))
-                {
-                    ModelState.AddModelError("", "Gallery code and password are required");
-                    return View("Index");
-                }
-
-                var gallery = await _context.Galleries
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.ClientCode == clientCode && 
-                                             g.ClientPassword == clientPassword &&
-                                             g.IsActive &&
-                                             g.ExpiryDate > DateTime.UtcNow);
-
-                if (gallery == null)
-                {
-                    _logger.LogWarning($"Failed gallery access attempt with code: {clientCode}");
-                    ModelState.AddModelError("", "Invalid gallery code or password");
-                    return View("Index");
-                }
-
-                var sessionToken = Guid.NewGuid().ToString();
-                var session = new GallerySession
-                {
-                    GalleryId = gallery.Id,
-                    SessionToken = sessionToken,
-                    CreatedDate = DateTime.UtcNow,
-                    LastAccessDate = DateTime.UtcNow
-                };
-
-                _context.GallerySessions.Add(session);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"Gallery session created: {sessionToken} for gallery: {gallery.Name}");
-
-                return RedirectToAction("ViewGallery", new { sessionToken });
+                _logger.LogWarning($"No client profile found for user: {userId}");
+                return View("NoAccess");
             }
-            catch (DbUpdateException dbEx)
+
+            // Get galleries the client has access to
+            var accessibleGalleries = await _context.GalleryAccesses
+                .Include(ga => ga.Gallery)
+                    .ThenInclude(g => g.Albums)
+                        .ThenInclude(a => a.Photos)
+                .Where(ga => ga.ClientProfileId == clientProfile.Id &&
+                            ga.IsActive &&
+                            (!ga.ExpiryDate.HasValue || ga.ExpiryDate > DateTime.UtcNow) &&
+                            ga.Gallery.IsActive &&
+                            ga.Gallery.ExpiryDate > DateTime.UtcNow)
+                .Select(ga => new
+                {
+                    Gallery = ga.Gallery,
+                    Access = ga
+                })
+                .ToListAsync();
+
+            var viewModel = accessibleGalleries.Select(item => new MyPhotoBiz.ViewModels.ClientGalleryViewModel
             {
-                _logger.LogError(dbEx, "Database error during gallery access");
-                ModelState.AddModelError("", "An error occurred while accessing the gallery. Please try again.");
-                return View("Index");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error accessing gallery");
-                ModelState.AddModelError("", "An unexpected error occurred. Please try again.");
-                return View("Index");
-            }
+                GalleryId = item.Gallery.Id,
+                Name = item.Gallery.Name,
+                Description = item.Gallery.Description,
+                BrandColor = item.Gallery.BrandColor,
+                PhotoCount = item.Gallery.Albums.SelectMany(a => a.Photos).Count(),
+                ExpiryDate = item.Gallery.ExpiryDate,
+                GrantedDate = item.Access.GrantedDate,
+                CanDownload = item.Access.CanDownload,
+                CanProof = item.Access.CanProof,
+                CanOrder = item.Access.CanOrder
+            }).ToList();
+
+            return View(viewModel);
         }
 
         /// <summary>
         /// Display gallery with photos
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> ViewGallery(string sessionToken)
+        public async Task<IActionResult> ViewGallery(int id)
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return RedirectToAction("Index");
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                    return RedirectToAction("Login", "Account");
 
-                var session = await _context.GallerySessions
-                    .Include(s => s.Gallery)
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
-                if (session == null)
+                // Validate user has access to this gallery
+                var hasAccess = await _galleryService.ValidateUserAccessAsync(id, userId);
+                if (!hasAccess)
                 {
-                    _logger.LogWarning($"Invalid session token attempted: {sessionToken}");
+                    _logger.LogWarning($"User {userId} attempted to access gallery {id} without permission");
                     return RedirectToAction("Index");
                 }
 
-                // Validate gallery is still active and not expired
-                if (!session.Gallery.IsActive || session.Gallery.ExpiryDate < DateTime.UtcNow)
+                var gallery = await _context.Galleries
+                    .Include(g => g.Albums)
+                        .ThenInclude(a => a.Photos)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(g => g.Id == id);
+
+                if (gallery == null || !gallery.IsActive || gallery.ExpiryDate < DateTime.UtcNow)
                 {
-                    _logger.LogWarning($"Gallery access attempt on inactive/expired gallery: {session.Gallery.Id}");
                     return RedirectToAction("Index");
                 }
 
-                // Update last access time
-                session.LastAccessDate = DateTime.UtcNow;
-                _context.GallerySessions.Update(session);
-                await _context.SaveChangesAsync();
+                // Create or update session for tracking
+                var clientProfile = await _context.ClientProfiles
+                    .FirstOrDefaultAsync(cp => cp.UserId == userId);
+
+                if (clientProfile != null)
+                {
+                    var session = await _context.GallerySessions
+                        .FirstOrDefaultAsync(s => s.GalleryId == id && s.UserId == userId);
+
+                    if (session == null)
+                    {
+                        session = new GallerySession
+                        {
+                            GalleryId = id,
+                            UserId = userId,
+                            SessionToken = Guid.NewGuid().ToString(),
+                            CreatedDate = DateTime.UtcNow,
+                            LastAccessDate = DateTime.UtcNow
+                        };
+                        _context.GallerySessions.Add(session);
+                    }
+                    else
+                    {
+                        session.LastAccessDate = DateTime.UtcNow;
+                    }
+                    await _context.SaveChangesAsync();
+
+                    ViewBag.SessionToken = session.SessionToken;
+                }
 
                 // Get photos from all albums in this gallery
-                var photos = await _context.Photos
-                    .Include(p => p.Album)
-                        .ThenInclude(a => a.Galleries)
-                    .Where(p => p.Album.Galleries.Any(g => g.Id == session.GalleryId))
-                    .AsNoTracking()
+                var photos = gallery.Albums.SelectMany(a => a.Photos)
                     .OrderBy(p => p.DisplayOrder)
-                    .ToListAsync();
+                    .ToList();
 
-                ViewBag.SessionToken = sessionToken;
-                ViewBag.GalleryName = session.Gallery.Name;
-                ViewBag.BrandColor = session.Gallery.BrandColor ?? "#2c3e50";
-                ViewBag.GalleryId = session.GalleryId;
+                ViewBag.GalleryName = gallery.Name;
+                ViewBag.BrandColor = gallery.BrandColor ?? "#2c3e50";
+                ViewBag.GalleryId = gallery.Id;
 
                 return View(photos);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error viewing gallery");
+                _logger.LogError(ex, $"Error viewing gallery {id}");
                 TempData["Error"] = "An error occurred while loading the gallery. Please try again.";
                 return RedirectToAction("Index");
             }
@@ -151,29 +166,36 @@ namespace MyPhotoBiz.Controllers
         /// Download full resolution photo
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Download(int photoId, string sessionToken)
+        public async Task<IActionResult> Download(int photoId, int galleryId)
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
                     return Unauthorized();
 
-                var session = await _context.GallerySessions
-                    .Include(s => s.Gallery)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
-                if (session == null)
+                // Validate user has access to this gallery
+                var hasAccess = await _galleryService.ValidateUserAccessAsync(galleryId, userId);
+                if (!hasAccess)
                 {
-                    _logger.LogWarning($"Download attempt with invalid session token");
+                    _logger.LogWarning($"Download attempt without permission: user {userId}, gallery {galleryId}");
                     return Unauthorized();
                 }
 
-                // Validate gallery is still active
-                if (!session.Gallery.IsActive || session.Gallery.ExpiryDate < DateTime.UtcNow)
+                // Get gallery access to check download permission
+                var clientProfile = await _context.ClientProfiles
+                    .FirstOrDefaultAsync(cp => cp.UserId == userId);
+
+                if (clientProfile != null)
                 {
-                    _logger.LogWarning($"Download attempt on inactive/expired gallery: {session.GalleryId}");
-                    return Unauthorized();
+                    var access = await _context.GalleryAccesses
+                        .FirstOrDefaultAsync(ga => ga.GalleryId == galleryId && ga.ClientProfileId == clientProfile.Id);
+
+                    if (access != null && !access.CanDownload)
+                    {
+                        _logger.LogWarning($"Download not permitted for user {userId} on gallery {galleryId}");
+                        return Forbid();
+                    }
                 }
 
                 // Verify photo belongs to an album in the gallery
@@ -181,7 +203,7 @@ namespace MyPhotoBiz.Controllers
                     .Include(p => p.Album)
                         .ThenInclude(a => a.Galleries)
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(p => p.Id == photoId && p.Album.Galleries.Any(g => g.Id == session.GalleryId));
+                    .FirstOrDefaultAsync(p => p.Id == photoId && p.Album.Galleries.Any(g => g.Id == galleryId));
 
                 if (photo == null)
                 {
@@ -215,8 +237,8 @@ namespace MyPhotoBiz.Controllers
 
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
                 var fileName = string.IsNullOrEmpty(photo.Title) ? $"photo_{photo.Id}.jpg" : $"{photo.Title}.jpg";
-                
-                _logger.LogInformation($"Photo downloaded: {photo.Id} by session: {sessionToken}");
+
+                _logger.LogInformation($"Photo downloaded: {photo.Id} by user: {userId}");
 
                 return File(fileBytes, "image/jpeg", fileName);
             }
@@ -236,38 +258,42 @@ namespace MyPhotoBiz.Controllers
         /// Get gallery session info via API
         /// </summary>
         [HttpGet]
-        [Route("api/gallery/session/{sessionToken}")]
-        public async Task<IActionResult> GetSessionInfo(string sessionToken)
+        [Route("api/gallery/session/{galleryId}")]
+        public async Task<IActionResult> GetSessionInfo(int galleryId)
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token required" });
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { success = false, message = "Not authenticated" });
+
+                var hasAccess = await _galleryService.ValidateUserAccessAsync(galleryId, userId);
+                if (!hasAccess)
+                    return Unauthorized(new { success = false, message = "No access to gallery" });
+
+                var gallery = await _context.Galleries
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(g => g.Id == galleryId);
+
+                if (gallery == null || !gallery.IsActive || gallery.ExpiryDate < DateTime.UtcNow)
+                    return Unauthorized(new { success = false, message = "Gallery expired" });
 
                 var session = await _context.GallerySessions
-                    .Include(s => s.Gallery)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
-                if (session == null)
-                    return Unauthorized(new { success = false, message = "Invalid session" });
-
-                if (!session.Gallery.IsActive || session.Gallery.ExpiryDate < DateTime.UtcNow)
-                    return Unauthorized(new { success = false, message = "Gallery expired" });
+                    .FirstOrDefaultAsync(s => s.GalleryId == galleryId && s.UserId == userId);
 
                 return Ok(new
                 {
                     success = true,
                     data = new
                     {
-                        session.GalleryId,
-                        session.Gallery.Name,
-                        session.Gallery.Description,
-                        session.Gallery.BrandColor,
-                        session.Gallery.LogoPath,
-                        ExpiryDate = session.Gallery.ExpiryDate,
-                        CreatedDate = session.CreatedDate,
-                        LastAccessDate = session.LastAccessDate
+                        GalleryId = gallery.Id,
+                        gallery.Name,
+                        gallery.Description,
+                        gallery.BrandColor,
+                        gallery.LogoPath,
+                        gallery.ExpiryDate,
+                        CreatedDate = session?.CreatedDate,
+                        LastAccessDate = session?.LastAccessDate
                     }
                 });
             }
@@ -282,16 +308,17 @@ namespace MyPhotoBiz.Controllers
         /// End gallery session
         /// </summary>
         [HttpPost]
-        [Route("api/gallery/session/end/{sessionToken}")]
-        public async Task<IActionResult> EndSession(string sessionToken)
+        [Route("api/gallery/session/end/{galleryId}")]
+        public async Task<IActionResult> EndSession(int galleryId)
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token required" });
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                    return BadRequest(new { success = false, message = "Not authenticated" });
 
                 var session = await _context.GallerySessions
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
+                    .FirstOrDefaultAsync(s => s.GalleryId == galleryId && s.UserId == userId);
 
                 if (session == null)
                     return NotFound(new { success = false, message = "Session not found" });
@@ -299,7 +326,7 @@ namespace MyPhotoBiz.Controllers
                 _context.GallerySessions.Remove(session);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Gallery session ended: {sessionToken}");
+                _logger.LogInformation($"Gallery session ended for user {userId} on gallery {galleryId}");
 
                 return Ok(new { success = true, message = "Session ended successfully" });
             }

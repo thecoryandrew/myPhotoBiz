@@ -1,14 +1,20 @@
 @using MyPhotoBiz.Models
 @model MyPhotoBiz.ViewModels.ClientDetailsViewModel
 @{
-    ViewBag.Title = "Client Details";
+    ViewBag.Title = $"{Model.FirstName} {Model.LastName}";
+    ViewBag.PageTitle = "Client Details";
     ViewBag.SubTitle = "Clients";
+    ViewBag.SubTitleUrl = Url.Action("Index", "Clients");
+    ViewBag.Icon = "ti-user";
+    ViewBag.Color = "primary";
     var firstInitial = !string.IsNullOrEmpty(Model.FirstName) ? Model.FirstName[0].ToString() : "";
     var lastInitial = !string.IsNullOrEmpty(Model.LastName) ? Model.LastName[0].ToString() : "";
     var avatarUrl = Model.User?.ProfilePicture;
 }
 
 <div class="container-fluid">
+    <partial name="Partials/_PageTitle" />
+
     <div class="row">
         <div class="col-12">
             <article class="card card-out-of-container border-top-0">

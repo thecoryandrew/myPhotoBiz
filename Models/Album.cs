@@ -23,9 +23,9 @@ namespace MyPhotoBiz.Models
         public virtual PhotoShoot PhotoShoot { get; set; } = null!;
 
 
-        // Foreign key
-        public int ClientId { get; set; }
-        public virtual Client Client { get; set; } = null!;
+        // Foreign key - Client via ClientProfile
+        public int ClientProfileId { get; set; }
+        public virtual ClientProfile ClientProfile { get; set; } = null!;
 
         // Navigation properties
         public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();

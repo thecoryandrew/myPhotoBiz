@@ -26,21 +26,14 @@ namespace MyPhotoBiz.ViewModels
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
 
-        [Display(Name = "Auto-generate Access Code")]
-        public bool AutoGenerateCode { get; set; } = true;
-
-        [StringLength(50)]
-        [Display(Name = "Client Code (leave blank to auto-generate)")]
-        public string? ClientCode { get; set; }
-
-        [StringLength(50)]
-        [Display(Name = "Client Password (leave blank to auto-generate)")]
-        public string? ClientPassword { get; set; }
-
         [Display(Name = "Select Albums")]
         public List<int> SelectedAlbumIds { get; set; } = new();
 
+        [Display(Name = "Grant Access To Clients")]
+        public List<int> SelectedClientProfileIds { get; set; } = new();
+
         public List<AlbumSelectionViewModel> AvailableAlbums { get; set; } = new();
+        public List<ClientSelectionViewModel> AvailableClients { get; set; } = new();
     }
 
     public class AlbumSelectionViewModel
@@ -62,5 +55,19 @@ namespace MyPhotoBiz.ViewModels
         public int? AlbumId { get; set; }
         public string? AlbumName { get; set; }
         public bool IsSelected { get; set; }
+    }
+
+    public class ClientGalleryViewModel
+    {
+        public int GalleryId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? BrandColor { get; set; }
+        public int PhotoCount { get; set; }
+        public DateTime ExpiryDate { get; set; }
+        public DateTime GrantedDate { get; set; }
+        public bool CanDownload { get; set; }
+        public bool CanProof { get; set; }
+        public bool CanOrder { get; set; }
     }
 }

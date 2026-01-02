@@ -1,0 +1,97 @@
+@using MyPhotoBiz.Enums
+@using MyPhotoBiz.Models
+@model IEnumerable<BookingRequest>
+@{
+    ViewBag.Title = "My Bookings";
+    Layout = "_Layout";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Bookings</h2>
+        <a asp-action="Book" class="btn btn-primary">
+            <i class="ti ti-plus me-2"></i>New Booking
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="avatar avatar-xl bg-light rounded-circle mx-auto mb-3">
+                    <i class="ti ti-calendar-off fs-1 text-muted"></i>
+                </div>
+                <h5>No Bookings Yet</h5>
+                <p class="text-muted mb-4">You haven't made any booking requests yet.</p>
+                <a asp-action="Book" class="btn btn-primary">
+                    <i class="ti ti-plus me-2"></i>Book a Session
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var booking in Model)
+            {
+                var statusClass = booking.Status switch
+                {
+                    BookingStatus.Pending => "warning",
+                    BookingStatus.Confirmed => "success",
+                    BookingStatus.Declined => "danger",
+                    BookingStatus.Cancelled => "secondary",
+                    BookingStatus.Completed => "info",
+                    _ => "primary"
+                };
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">@booking.BookingReference</span>
+                            <span class="badge bg-@statusClass">@booking.Status</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@booking.EventType</h5>
+                            <p class="card-text text-muted mb-2">
+                                <i class="ti ti-calendar me-1"></i>
+                                @booking.PreferredDate.ToString("MMMM dd, yyyy")
+                            </p>
+                            <p class="card-text text-muted mb-2">
+                                <i class="ti ti-clock me-1"></i>
+                                @booking.PreferredStartTime.ToString(@"hh\:mm")
+                            </p>
+                            <p class="card-text text-muted mb-0">
+                                <i class="ti ti-map-pin me-1"></i>
+                                @booking.Location
+                            </p>
+                            @if (booking.ServicePackage != null)
+                            {
+                                <p class="card-text mt-2 mb-0">
+                                    <span class="badge bg-primary-subtle text-primary">@booking.ServicePackage.Name</span>
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            @if (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed)
+                            {
+                                <form asp-action="Cancel" asp-route-id="@booking.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="ti ti-x me-1"></i>Cancel
+                                    </button>
+                                </form>
+                            }
+                            @if (booking.PhotoShootId.HasValue)
+                            {
+                                <a asp-controller="PhotoShoots" asp-action="Details" asp-route-id="@booking.PhotoShootId"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="ti ti-camera me-1"></i>View Shoot
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

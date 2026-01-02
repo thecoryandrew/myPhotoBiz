@@ -1,0 +1,122 @@
+@using MyPhotoBiz.ViewModels
+@model CreateBookingViewModel
+@{
+    ViewBag.Title = "Book a Session";
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold">Book Your Photo Session</h1>
+                <p class="lead text-muted">Fill out the form below and we'll get back to you within 24 hours.</p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="Book" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Package Selection -->
+                        <div class="mb-4">
+                            <label asp-for="ServicePackageId" class="form-label fw-semibold">Select a Package (Optional)</label>
+                            <select asp-for="ServicePackageId" asp-items="Model.Packages" class="form-select form-select-lg">
+                                <option value="">-- Choose a package --</option>
+                            </select>
+                            <small class="text-muted">
+                                <a asp-controller="Packages" asp-action="Index" target="_blank">View all packages</a>
+                            </small>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Event Details -->
+                        <h5 class="mb-3"><i class="ti ti-camera me-2"></i>Event Details</h5>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="EventType" class="form-label">Event Type <span class="text-danger">*</span></label>
+                                <input asp-for="EventType" class="form-control" placeholder="e.g., Wedding, Portrait, Family, Event" />
+                                <span asp-validation-for="EventType" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PreferredDate" class="form-label">Preferred Date <span class="text-danger">*</span></label>
+                                <input asp-for="PreferredDate" type="date" class="form-control" />
+                                <span asp-validation-for="PreferredDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PreferredStartTime" class="form-label">Preferred Start Time <span class="text-danger">*</span></label>
+                                <input asp-for="PreferredStartTime" type="time" class="form-control" />
+                                <span asp-validation-for="PreferredStartTime" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="AlternativeDate" class="form-label">Alternative Date</label>
+                                <input asp-for="AlternativeDate" type="date" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="EstimatedDurationHours" class="form-label">Estimated Duration (hours)</label>
+                                <input asp-for="EstimatedDurationHours" type="number" step="0.5" min="0.5" max="12" class="form-control" />
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Location" class="form-label">Location <span class="text-danger">*</span></label>
+                                <input asp-for="Location" class="form-control" placeholder="Address or venue name" />
+                                <span asp-validation-for="Location" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="SpecialRequirements" class="form-label">Special Requirements</label>
+                                <textarea asp-for="SpecialRequirements" class="form-control" rows="3"
+                                          placeholder="Any special requests, themes, or requirements..."></textarea>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Contact Information -->
+                        <h5 class="mb-3"><i class="ti ti-address-book me-2"></i>Contact Information</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label asp-for="ContactName" class="form-label">Full Name</label>
+                                <input asp-for="ContactName" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="ContactEmail" class="form-label">Email</label>
+                                <input asp-for="ContactEmail" type="email" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="ContactPhone" class="form-label">Phone</label>
+                                <input asp-for="ContactPhone" type="tel" class="form-control" />
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="ti ti-send me-2"></i>Submit Booking Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 text-muted">
+                <p><i class="ti ti-clock me-1"></i>We typically respond within 24 hours</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
