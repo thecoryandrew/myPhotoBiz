@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MyPhotoBiz.Data;
 using MyPhotoBiz.Enums;
 using MyPhotoBiz.Models;
+using MyPhotoBiz.Services;
 using MyPhotoBiz.ViewModels;
 
 namespace MyPhotoBiz.Controllers
@@ -15,7 +16,6 @@ namespace MyPhotoBiz.Controllers
     // TODO: [MEDIUM] Add contract status transition validation (state machine)
     // TODO: [MEDIUM] Signature validation is weak - any base64 string accepted
     // TODO: [MEDIUM] Add contract versioning for amendments
-    // TODO: [FEATURE] Add contract templates system
     // TODO: [FEATURE] Add e-signature integration (DocuSign, HelloSign)
     // TODO: [FEATURE] Add multi-signature support (client + photographer)
     // TODO: [FEATURE] Send email notification when contract is sent for signature
@@ -23,11 +23,16 @@ namespace MyPhotoBiz.Controllers
     public class ContractsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IContractTemplateService _templateService;
         private readonly ILogger<ContractsController> _logger;
 
-        public ContractsController(ApplicationDbContext context, ILogger<ContractsController> logger)
+        public ContractsController(
+            ApplicationDbContext context,
+            IContractTemplateService templateService,
+            ILogger<ContractsController> logger)
         {
             _context = context;
+            _templateService = templateService;
             _logger = logger;
         }
 
@@ -55,6 +60,7 @@ namespace MyPhotoBiz.Controllers
         {
             var viewModel = new CreateContractViewModel
             {
+                AvailableTemplates = await GetTemplatesAsync(),
                 AvailableClients = await GetClientsAsync(),
                 AvailablePhotoShoots = await GetPhotoShootsAsync(),
                 AvailableBadges = await GetBadgesAsync()
@@ -84,6 +90,7 @@ namespace MyPhotoBiz.Controllers
                         PdfFilePath = pdfPath,
                         ClientProfileId = model.ClientId,
                         PhotoShootId = model.PhotoShootId,
+                        TemplateId = model.TemplateId,
                         CreatedDate = DateTime.UtcNow,
                         Status = ContractStatus.Draft,
                         AwardBadgeOnSign = model.AwardBadgeOnSign,
@@ -103,6 +110,7 @@ namespace MyPhotoBiz.Controllers
                 }
             }
 
+            model.AvailableTemplates = await GetTemplatesAsync();
             model.AvailableClients = await GetClientsAsync();
             model.AvailablePhotoShoots = await GetPhotoShootsAsync();
             model.AvailableBadges = await GetBadgesAsync();
@@ -424,5 +432,78 @@ namespace MyPhotoBiz.Controllers
                 _logger.LogInformation($"Badge {badgeId} awarded to client profile {clientProfileId}");
             }
         }
+
+        private async Task<List<TemplateSelectionViewModel>> GetTemplatesAsync()
+        {
+            var templates = await _templateService.GetActiveTemplatesAsync();
+            return templates.Select(t => new TemplateSelectionViewModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                Category = t.Category.ToString()
+            }).ToList();
+        }
+
+        // AJAX endpoint to get template content
+        [HttpGet]
+        public async Task<IActionResult> GetTemplateContent(int templateId)
+        {
+            try
+            {
+                var template = await _templateService.GetTemplateByIdAsync(templateId);
+                if (template == null)
+                {
+                    return NotFound(new { success = false, message = "Template not found" });
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    content = template.Content,
+                    name = template.Name
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving template content for template ID: {TemplateId}", templateId);
+                return StatusCode(500, new { success = false, message = "An error occurred while loading the template" });
+            }
+        }
+
+        // AJAX endpoint to populate template with client data
+        [HttpPost]
+        public async Task<IActionResult> PopulateTemplate([FromBody] PopulateTemplateRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.TemplateContent) || !request.ClientId.HasValue)
+                {
+                    return BadRequest(new { success = false, message = "Template content and client ID are required" });
+                }
+
+                var populatedContent = await _templateService.PopulateTemplateWithClientDataAsync(
+                    request.TemplateContent,
+                    request.ClientId.Value);
+
+                return Json(new
+                {
+                    success = true,
+                    content = populatedContent
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error populating template with client data");
+                return StatusCode(500, new { success = false, message = "An error occurred while populating the template" });
+            }
+        }
+    }
+
+    // Request model for PopulateTemplate endpoint
+    public class PopulateTemplateRequest
+    {
+        public string TemplateContent { get; set; } = string.Empty;
+        public int? ClientId { get; set; }
     }
 }

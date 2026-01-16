@@ -49,6 +49,7 @@ builder.Services.AddScoped<IProofService, ProofService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPackageService, PackageService>();
+builder.Services.AddScoped<IContractTemplateService, ContractTemplateService>();
 
 // Register Email Sender
 builder.Services.AddTransient<IEmailSender, EmailSender>();
@@ -80,6 +81,10 @@ using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    // Apply pending migrations
+    await dbContext.Database.MigrateAsync();
 
     // Create roles
     string[] roles = { "Admin", "Client", "Photographer" };
@@ -116,6 +121,9 @@ using (var scope = app.Services.CreateScope())
             }
         }
     }
+
+    // Seed contract templates
+    await ContractTemplateSeeder.SeedTemplatesAsync(dbContext);
 }
 
 app.Run();

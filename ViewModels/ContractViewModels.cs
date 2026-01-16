@@ -5,6 +5,9 @@ namespace MyPhotoBiz.ViewModels
 {
     public class CreateContractViewModel
     {
+        [Display(Name = "Use Template")]
+        public int? TemplateId { get; set; }
+
         [Required]
         [StringLength(200)]
         [Display(Name = "Contract Title")]
@@ -28,6 +31,7 @@ namespace MyPhotoBiz.ViewModels
         [Display(Name = "Badge to Award")]
         public int? BadgeToAwardId { get; set; }
 
+        public List<TemplateSelectionViewModel> AvailableTemplates { get; set; } = new();
         public List<ClientSelectionViewModel> AvailableClients { get; set; } = new();
         public List<PhotoShootSelectionViewModel> AvailablePhotoShoots { get; set; } = new();
         public List<BadgeSelectionViewModel> AvailableBadges { get; set; } = new();
@@ -125,5 +129,13 @@ namespace MyPhotoBiz.ViewModels
         public string? Description { get; set; }
         public string? Icon { get; set; }
         public string Color { get; set; } = "#6c757d";
+    }
+
+    public class TemplateSelectionViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string Category { get; set; } = string.Empty;
     }
 }

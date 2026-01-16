@@ -28,6 +28,7 @@ namespace MyPhotoBiz.Data
         #region DbSets
         // Original DbSets
         public DbSet<Contract> Contracts => Set<Contract>();
+        public DbSet<ContractTemplate> ContractTemplates => Set<ContractTemplate>();
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<PhotoShoot> PhotoShoots => Set<PhotoShoot>();
         public DbSet<Album> Albums => Set<Album>();
@@ -280,6 +281,22 @@ namespace MyPhotoBiz.Data
                 .WithMany()
                 .HasForeignKey(c => c.BadgeToAwardId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Contract <-> ContractTemplate (N:1)
+            modelBuilder.Entity<Contract>()
+                .HasOne(c => c.Template)
+                .WithMany(t => t.Contracts)
+                .HasForeignKey(c => c.TemplateId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ContractTemplate indexes
+            modelBuilder.Entity<ContractTemplate>()
+                .HasIndex(ct => ct.Category)
+                .HasDatabaseName("IX_ContractTemplate_Category");
+
+            modelBuilder.Entity<ContractTemplate>()
+                .HasIndex(ct => ct.IsActive)
+                .HasDatabaseName("IX_ContractTemplate_IsActive");
         }
 
         /// <summary>

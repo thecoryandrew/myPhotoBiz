@@ -22,6 +22,27 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                         <div class="mb-3">
+                            <label class="form-label">
+                                <i class="ti ti-template me-1"></i>Use Template (Optional)
+                            </label>
+                            <div class="input-group">
+                                <select asp-for="TemplateId" id="templateSelect" class="form-select">
+                                    <option value="">-- Select a Template --</option>
+                                    @foreach (var template in Model.AvailableTemplates)
+                                    {
+                                        <option value="@template.Id" data-category="@template.Category">
+                                            @template.Name (@template.Category)
+                                        </option>
+                                    }
+                                </select>
+                                <button type="button" id="loadTemplateBtn" class="btn btn-outline-primary" disabled>
+                                    <i class="ti ti-download me-1"></i> Load Template
+                                </button>
+                            </div>
+                            <small class="text-muted">Select a template to pre-fill the contract content</small>
+                        </div>
+
+                        <div class="mb-3">
                             <label asp-for="Title" class="form-label">Contract Title <span class="text-danger">*</span></label>
                             <input asp-for="Title" class="form-control" placeholder="e.g., Wedding Photography Agreement">
                             <span asp-validation-for="Title" class="text-danger small"></span>
@@ -30,7 +51,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="ClientId" class="form-label">Client</label>
-                                <select asp-for="ClientId" class="form-select">
+                                <select asp-for="ClientId" id="clientSelect" class="form-select">
                                     <option value="">-- Select Client (Optional) --</option>
                                     @foreach (var client in Model.AvailableClients)
                                     {
@@ -54,10 +75,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Content" class="form-label">Contract Content <span class="text-danger">*</span></label>
-                            <textarea asp-for="Content" class="form-control" rows="15" placeholder="Enter contract terms and conditions..."></textarea>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label asp-for="Content" class="form-label mb-0">
+                                    Contract Content <span class="text-danger">*</span>
+                                </label>
+                                <button type="button" id="populateClientBtn" class="btn btn-sm btn-outline-success" disabled>
+                                    <i class="ti ti-user-check me-1"></i> Auto-Fill Client Info
+                                </button>
+                            </div>
+                            <textarea asp-for="Content" id="contractContent" class="form-control" rows="15" placeholder="Enter contract terms and conditions or select a template above..."></textarea>
                             <span asp-validation-for="Content" class="text-danger small"></span>
-                            <small class="text-muted">You can use HTML formatting if needed.</small>
+                            <small class="text-muted">
+                                Available placeholders: {ClientFullName}, {ClientEmail}, {ClientPhone}, {ClientAddress}, {CurrentDate}, {CurrentYear}
+                            </small>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
@@ -105,4 +135,143 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function() {
+            const templateSelect = $('#templateSelect');
+            const clientSelect = $('#clientSelect');
+            const loadTemplateBtn = $('#loadTemplateBtn');
+            const populateClientBtn = $('#populateClientBtn');
+            const contractContent = $('#contractContent');
+            const titleInput = $('#Title');
+
+            // Enable/disable buttons based on selections
+            templateSelect.on('change', function() {
+                loadTemplateBtn.prop('disabled', !this.value);
+            });
+
+            clientSelect.on('change', function() {
+                const hasContent = contractContent.val().trim().length > 0;
+                populateClientBtn.prop('disabled', !this.value || !hasContent);
+            });
+
+            contractContent.on('input', function() {
+                const hasClient = clientSelect.val();
+                const hasContent = this.value.trim().length > 0;
+                populateClientBtn.prop('disabled', !hasClient || !hasContent);
+            });
+
+            // Load template content
+            loadTemplateBtn.on('click', function() {
+                const templateId = templateSelect.val();
+                if (!templateId) return;
+
+                $(this).prop('disabled', true).html('<i class="ti ti-loader me-1"></i> Loading...');
+
+                $.ajax({
+                    url: '@Url.Action("GetTemplateContent", "Contracts")',
+                    type: 'GET',
+                    data: { templateId: templateId },
+                    success: function(response) {
+                        if (response.success) {
+                            contractContent.val(response.content);
+
+                            // Auto-fill title if empty
+                            if (!titleInput.val().trim()) {
+                                titleInput.val(response.name);
+                            }
+
+                            // Enable populate button if client is selected
+                            if (clientSelect.val()) {
+                                populateClientBtn.prop('disabled', false);
+                            }
+
+                            // Show success message
+                            if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Template Loaded',
+                                    text: 'Template content has been loaded. Select a client to auto-fill their information.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        if (window.Swal) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to load template. Please try again.'
+                            });
+                        } else {
+                            alert('Failed to load template. Please try again.');
+                        }
+                    },
+                    complete: function() {
+                        loadTemplateBtn.prop('disabled', false).html('<i class="ti ti-download me-1"></i> Load Template');
+                    }
+                });
+            });
+
+            // Auto-populate client information
+            populateClientBtn.on('click', function() {
+                const clientId = clientSelect.val();
+                const content = contractContent.val();
+
+                if (!clientId || !content) return;
+
+                $(this).prop('disabled', true).html('<i class="ti ti-loader me-1"></i> Processing...');
+
+                $.ajax({
+                    url: '@Url.Action("PopulateTemplate", "Contracts")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        templateContent: content,
+                        clientId: parseInt(clientId)
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            contractContent.val(response.content);
+
+                            if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Client Info Added',
+                                    text: 'Client information has been populated in the contract.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        if (window.Swal) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to populate client information. Please try again.'
+                            });
+                        } else {
+                            alert('Failed to populate client information. Please try again.');
+                        }
+                    },
+                    complete: function() {
+                        populateClientBtn.prop('disabled', false).html('<i class="ti ti-user-check me-1"></i> Auto-Fill Client Info');
+                    }
+                });
+            });
+
+            // Quick link to template management
+            const templateHelp = `
+                <div class="alert alert-info mt-2">
+                    <i class="ti ti-info-circle me-2"></i>
+                    <strong>Don't see the template you need?</strong>
+                    <a href="@Url.Action("Index", "ContractTemplates")" class="alert-link">Manage Templates</a>
+                </div>
+            `;
+        });
+    </script>
 }

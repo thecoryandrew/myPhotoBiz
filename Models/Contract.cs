@@ -30,11 +30,13 @@ namespace MyPhotoBiz.Models
         // Foreign keys
         public int? ClientProfileId { get; set; }
         public int? PhotoShootId { get; set; }
+        public int? TemplateId { get; set; }
 
         // Navigation properties
         public virtual ClientProfile? ClientProfile { get; set; }
         public virtual PhotoShoot? PhotoShoot { get; set; }
         public virtual Badge? BadgeToAward { get; set; }
+        public virtual ContractTemplate? Template { get; set; }
         public virtual ICollection<ClientBadge> ClientBadges { get; set; } = new List<ClientBadge>();
     }
 }
