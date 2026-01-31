@@ -202,7 +202,7 @@ namespace MyPhotoBiz.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Awarded New User badge to {clientProfilesWithoutBadge.Count} existing clients");
+                _logger.LogInformation("Awarded New User badge to {Count} existing clients", clientProfilesWithoutBadge.Count);
                 TempData["Success"] = $"Successfully awarded New User badge to {clientProfilesWithoutBadge.Count} existing clients!";
                 return RedirectToAction(nameof(Index));
             }

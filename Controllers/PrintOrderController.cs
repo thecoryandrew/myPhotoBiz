@@ -175,7 +175,7 @@ namespace MyPhotoBiz.Controllers
                 _context.PrintOrders.Add(order);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Order {order.OrderNumber} created successfully for {order.ClientEmail}");
+                _logger.LogInformation("Order {OrderNumber} created successfully for {ClientEmail}", order.OrderNumber, order.ClientEmail);
 
                 return RedirectToAction("OrderConfirmation", new { orderId = order.Id });
             }

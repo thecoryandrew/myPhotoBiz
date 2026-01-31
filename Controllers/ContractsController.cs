@@ -422,7 +422,7 @@ namespace MyPhotoBiz.Controllers
                 _context.ClientBadges.Add(clientBadge);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Badge {badgeId} awarded to client profile {clientProfileId}");
+                _logger.LogInformation("Badge {BadgeId} awarded to client profile {ClientProfileId}", badgeId, clientProfileId);
             }
         }
     }

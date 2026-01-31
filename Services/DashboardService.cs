@@ -101,7 +101,7 @@ namespace MyPhotoBiz.Services
             var monthlyRevenue = new Dictionary<string, decimal>();
             for (int i = 11; i >= 0; i--)
             {
-                var month = DateTime.Now.AddMonths(-i);
+                var month = DateTime.UtcNow.AddMonths(-i);
                 var monthKey = month.ToString("MMM yyyy");
                 
                 // Sum on client side because SQLite provider doesn't support SUM on decimal expressions

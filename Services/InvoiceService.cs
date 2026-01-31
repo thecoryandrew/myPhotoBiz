@@ -151,7 +151,7 @@ namespace MyPhotoBiz.Services
             if (string.IsNullOrEmpty(invoice.InvoiceNumber))
                 invoice.InvoiceNumber = await GenerateInvoiceNumberAsync();
 
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
@@ -164,7 +164,7 @@ namespace MyPhotoBiz.Services
             if (invoice == null) throw new InvalidOperationException("Invoice not found");
 
             invoice.Status = status;
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             if (status == InvoiceStatus.Paid && paidDate.HasValue)
                 invoice.PaidDate = paidDate;
@@ -178,7 +178,7 @@ namespace MyPhotoBiz.Services
             foreach (var invoice in invoices)
             {
                 invoice.Status = status;
-                invoice.UpdatedDate = DateTime.Now;
+                invoice.UpdatedDate = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -191,7 +191,7 @@ namespace MyPhotoBiz.Services
 
             invoice.Status = InvoiceStatus.Paid;
             invoice.PaidDate = paidDate;
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }
@@ -204,7 +204,7 @@ namespace MyPhotoBiz.Services
             invoice.Status = InvoiceStatus.Paid;
             invoice.PaidDate = paidDate;
             invoice.Amount = amount;
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }
@@ -229,7 +229,7 @@ namespace MyPhotoBiz.Services
                 Tax = invoice.Tax,
                 Notes = invoice.Notes,
                 InvoiceNumber = await GenerateInvoiceNumberAsync(),
-                UpdatedDate = DateTime.Now,
+                UpdatedDate = DateTime.UtcNow,
                 InvoiceItems = invoice.InvoiceItems?.Select(ii => new InvoiceItem
                 {
                     Description = ii.Description,
@@ -273,7 +273,7 @@ namespace MyPhotoBiz.Services
         {
             if (invoice == null) throw new ArgumentNullException(nameof(invoice));
 
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
             _context.Invoices.Update(invoice);
             await _context.SaveChangesAsync();
         }

@@ -23,8 +23,8 @@ namespace MyPhotoBiz.ViewModels
         public int UserCount { get; set; }
         public List<ApplicationUser> Users { get; set; } = new();
         public List<string> Permissions { get; set; } = new();
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-        public DateTime LastUpdated { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 
     public class UserRoleViewModel
@@ -84,7 +84,7 @@ namespace MyPhotoBiz.ViewModels
         public int UserCount { get; set; }
         public List<ApplicationUser> Users { get; set; } = new();
         public List<string> Permissions { get; set; } = new();
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     }
 
     public class AssignRoleViewModel

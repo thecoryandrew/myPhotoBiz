@@ -93,8 +93,8 @@ namespace MyPhotoBiz.Controllers
                             FileSize = file.Length,
                             AlbumId = albumId,
                             ClientProfileId = album.PhotoShoot.ClientProfileId,
-                            UploadDate = DateTime.Now,
-                            UploadedDate = DateTime.Now,
+                            UploadDate = DateTime.UtcNow,
+                            UploadedDate = DateTime.UtcNow,
                             DisplayOrder = 0,
                             IsSelected = false
                         };

@@ -27,8 +27,8 @@ namespace MyPhotoBiz.Models
 
         public string Notes { get; set; } = string.Empty;
 
-        public DateTime UpdatedDate { get; set; } = DateTime.Now;
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         public string FullName => $"{FirstName} {LastName}";
         // Foreign key

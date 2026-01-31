@@ -126,7 +126,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving gallery details for ID: {id}");
+                _logger.LogError(ex, "Error retrieving gallery details for ID: {GalleryId}", id);
                 throw;
             }
         }
@@ -142,7 +142,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving gallery by ID: {id}");
+                _logger.LogError(ex, "Error retrieving gallery by ID: {GalleryId}", id);
                 throw;
             }
         }
@@ -181,7 +181,7 @@ namespace MyPhotoBiz.Services
                     }
                 }
 
-                _logger.LogInformation($"Gallery created: {gallery.Name} (ID: {gallery.Id})");
+                _logger.LogInformation("Gallery created: {GalleryName} (ID: {GalleryId})", gallery.Name, gallery.Id);
 
                 return gallery;
             }
@@ -239,13 +239,13 @@ namespace MyPhotoBiz.Services
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Gallery updated: {gallery.Name} (ID: {gallery.Id})");
+                _logger.LogInformation("Gallery updated: {GalleryName} (ID: {GalleryId})", gallery.Name, gallery.Id);
 
                 return gallery;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating gallery ID: {model.Id}");
+                _logger.LogError(ex, "Error updating gallery ID: {GalleryId}", model.Id);
                 throw;
             }
         }
@@ -266,13 +266,13 @@ namespace MyPhotoBiz.Services
                 _context.Galleries.Remove(gallery);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Gallery deleted: {gallery.Name} (ID: {id})");
+                _logger.LogInformation("Gallery deleted: {GalleryName} (ID: {GalleryId})", gallery.Name, id);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting gallery ID: {id}");
+                _logger.LogError(ex, "Error deleting gallery ID: {GalleryId}", id);
                 throw;
             }
         }
@@ -289,13 +289,13 @@ namespace MyPhotoBiz.Services
                 gallery.IsActive = isActive;
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Gallery {(isActive ? "activated" : "deactivated")}: {gallery.Name} (ID: {id})");
+                _logger.LogInformation("Gallery {Status}: {GalleryName} (ID: {GalleryId})", isActive ? "activated" : "deactivated", gallery.Name, id);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error toggling gallery status for ID: {id}");
+                _logger.LogError(ex, "Error toggling gallery status for ID: {GalleryId}", id);
                 throw;
             }
         }
@@ -333,13 +333,13 @@ namespace MyPhotoBiz.Services
                 _context.GalleryAccesses.Add(access);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Access granted for gallery {galleryId} to client profile {clientProfileId}");
+                _logger.LogInformation("Access granted for gallery {GalleryId} to client profile {ClientProfileId}", galleryId, clientProfileId);
 
                 return access;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error granting access for gallery {galleryId} to client profile {clientProfileId}");
+                _logger.LogError(ex, "Error granting access for gallery {GalleryId} to client profile {ClientProfileId}", galleryId, clientProfileId);
                 throw;
             }
         }
@@ -358,13 +358,13 @@ namespace MyPhotoBiz.Services
                 access.IsActive = false;
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Access revoked for gallery {galleryId} from client profile {clientProfileId}");
+                _logger.LogInformation("Access revoked for gallery {GalleryId} from client profile {ClientProfileId}", galleryId, clientProfileId);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error revoking access for gallery {galleryId} from client profile {clientProfileId}");
+                _logger.LogError(ex, "Error revoking access for gallery {GalleryId} from client profile {ClientProfileId}", galleryId, clientProfileId);
                 throw;
             }
         }
@@ -388,7 +388,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error validating user access for gallery {galleryId}");
+                _logger.LogError(ex, "Error validating user access for gallery {GalleryId}", galleryId);
                 throw;
             }
         }
@@ -407,7 +407,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving gallery accesses for gallery {galleryId}");
+                _logger.LogError(ex, "Error retrieving gallery accesses for gallery {GalleryId}", galleryId);
                 throw;
             }
         }
@@ -437,13 +437,13 @@ namespace MyPhotoBiz.Services
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Added {albums.Count} albums to gallery ID: {galleryId}");
+                _logger.LogInformation("Added {AlbumCount} albums to gallery ID: {GalleryId}", albums.Count, galleryId);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error adding albums to gallery ID: {galleryId}");
+                _logger.LogError(ex, "Error adding albums to gallery ID: {GalleryId}", galleryId);
                 throw;
             }
         }
@@ -468,13 +468,13 @@ namespace MyPhotoBiz.Services
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Removed {albumsToRemove.Count} albums from gallery ID: {galleryId}");
+                _logger.LogInformation("Removed {AlbumCount} albums from gallery ID: {GalleryId}", albumsToRemove.Count, galleryId);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error removing albums from gallery ID: {galleryId}");
+                _logger.LogError(ex, "Error removing albums from gallery ID: {GalleryId}", galleryId);
                 throw;
             }
         }
@@ -538,7 +538,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving sessions for gallery ID: {galleryId}");
+                _logger.LogError(ex, "Error retrieving sessions for gallery ID: {GalleryId}", galleryId);
                 throw;
             }
         }
@@ -555,13 +555,13 @@ namespace MyPhotoBiz.Services
                 _context.GallerySessions.Remove(session);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Session ended: {session.SessionToken}");
+                _logger.LogInformation("Session ended: {SessionToken}", session.SessionToken);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error ending session ID: {sessionId}");
+                _logger.LogError(ex, "Error ending session ID: {SessionId}", sessionId);
                 throw;
             }
         }
@@ -577,13 +577,13 @@ namespace MyPhotoBiz.Services
                 _context.GallerySessions.RemoveRange(sessions);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"All sessions ended for gallery ID: {galleryId} ({sessions.Count} sessions)");
+                _logger.LogInformation("All sessions ended for gallery ID: {GalleryId} ({SessionCount} sessions)", galleryId, sessions.Count);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error ending all sessions for gallery ID: {galleryId}");
+                _logger.LogError(ex, "Error ending all sessions for gallery ID: {GalleryId}", galleryId);
                 throw;
             }
         }

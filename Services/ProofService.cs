@@ -137,7 +137,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving proof details for ID: {id}");
+                _logger.LogError(ex, "Error retrieving proof details for ID: {ProofId}", id);
                 throw;
             }
         }
@@ -180,7 +180,7 @@ namespace MyPhotoBiz.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving proofs for photo ID: {photoId}");
+                _logger.LogError(ex, "Error retrieving proofs for photo ID: {PhotoId}", photoId);
                 throw;
             }
         }
@@ -415,13 +415,13 @@ namespace MyPhotoBiz.Services
                 _context.Proofs.Remove(proof);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Proof deleted: ID {id}");
+                _logger.LogInformation("Proof deleted: ID {ProofId}", id);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting proof ID: {id}");
+                _logger.LogError(ex, "Error deleting proof ID: {ProofId}", id);
                 throw;
             }
         }
@@ -440,7 +440,7 @@ namespace MyPhotoBiz.Services
                 _context.Proofs.RemoveRange(proofs);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Bulk delete: {proofs.Count} proofs deleted");
+                _logger.LogInformation("Bulk delete: {DeletedCount} proofs deleted", proofs.Count);
 
                 return true;
             }

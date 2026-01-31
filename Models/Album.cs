@@ -13,7 +13,7 @@ namespace MyPhotoBiz.Models
 
         public string? Description { get; set; }
 
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         public bool IsPublic { get; set; } = false;
 

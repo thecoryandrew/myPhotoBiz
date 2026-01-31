@@ -44,7 +44,7 @@ namespace MyPhotoBiz.Controllers
 
             if (clientProfile == null)
             {
-                _logger.LogWarning($"No client profile found for user: {userId}");
+                _logger.LogWarning("No client profile found for user: {UserId}", userId);
                 return View("NoAccess");
             }
 
@@ -98,7 +98,7 @@ namespace MyPhotoBiz.Controllers
                 var hasAccess = await _galleryService.ValidateUserAccessAsync(id, userId);
                 if (!hasAccess)
                 {
-                    _logger.LogWarning($"User {userId} attempted to access gallery {id} without permission");
+                    _logger.LogWarning("User {UserId} attempted to access gallery {GalleryId} without permission", userId, id);
                     return RedirectToAction("Index");
                 }
 
@@ -156,7 +156,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error viewing gallery {id}");
+                _logger.LogError(ex, "Error viewing gallery {GalleryId}", id);
                 TempData["Error"] = "An error occurred while loading the gallery. Please try again.";
                 return RedirectToAction("Index");
             }
@@ -178,7 +178,7 @@ namespace MyPhotoBiz.Controllers
                 var hasAccess = await _galleryService.ValidateUserAccessAsync(galleryId, userId);
                 if (!hasAccess)
                 {
-                    _logger.LogWarning($"Download attempt without permission: user {userId}, gallery {galleryId}");
+                    _logger.LogWarning("Download attempt without permission: user {UserId}, gallery {GalleryId}", userId, galleryId);
                     return Unauthorized();
                 }
 
@@ -193,7 +193,7 @@ namespace MyPhotoBiz.Controllers
 
                     if (access != null && !access.CanDownload)
                     {
-                        _logger.LogWarning($"Download not permitted for user {userId} on gallery {galleryId}");
+                        _logger.LogWarning("Download not permitted for user {UserId} on gallery {GalleryId}", userId, galleryId);
                         return Forbid();
                     }
                 }
@@ -207,14 +207,14 @@ namespace MyPhotoBiz.Controllers
 
                 if (photo == null)
                 {
-                    _logger.LogWarning($"Download attempt for non-existent photo: {photoId}");
+                    _logger.LogWarning("Download attempt for non-existent photo: {PhotoId}", photoId);
                     return NotFound();
                 }
 
                 // Validate file path
                 if (string.IsNullOrEmpty(photo.FullImagePath))
                 {
-                    _logger.LogWarning($"Photo has no file path: {photoId}");
+                    _logger.LogWarning("Photo has no file path: {PhotoId}", photoId);
                     return NotFound();
                 }
 
@@ -225,20 +225,20 @@ namespace MyPhotoBiz.Controllers
                 var resolvedPath = Path.GetFullPath(filePath);
                 if (!resolvedPath.StartsWith(fullWwwrootPath))
                 {
-                    _logger.LogWarning($"Path traversal attempt detected: {filePath}");
+                    _logger.LogWarning("Path traversal attempt detected: {FilePath}", filePath);
                     return Unauthorized();
                 }
 
                 if (!System.IO.File.Exists(filePath))
                 {
-                    _logger.LogWarning($"Photo file not found: {filePath}");
+                    _logger.LogWarning("Photo file not found: {FilePath}", filePath);
                     return NotFound();
                 }
 
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
                 var fileName = string.IsNullOrEmpty(photo.Title) ? $"photo_{photo.Id}.jpg" : $"{photo.Title}.jpg";
 
-                _logger.LogInformation($"Photo downloaded: {photo.Id} by user: {userId}");
+                _logger.LogInformation("Photo downloaded: {PhotoId} by user: {UserId}", photo.Id, userId);
 
                 return File(fileBytes, "image/jpeg", fileName);
             }
@@ -326,7 +326,7 @@ namespace MyPhotoBiz.Controllers
                 _context.GallerySessions.Remove(session);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Gallery session ended for user {userId} on gallery {galleryId}");
+                _logger.LogInformation("Gallery session ended for user {UserId} on gallery {GalleryId}", userId, galleryId);
 
                 return Ok(new { success = true, message = "Session ended successfully" });
             }

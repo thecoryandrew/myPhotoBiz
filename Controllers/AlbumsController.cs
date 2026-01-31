@@ -140,7 +140,7 @@ namespace MyPhotoBiz.Controllers
                 Description = model.Description ?? string.Empty,
                 PhotoShootId = photoShoot.Id,
                 ClientProfileId = photoShoot.ClientProfileId,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 IsPublic = false
             };
 

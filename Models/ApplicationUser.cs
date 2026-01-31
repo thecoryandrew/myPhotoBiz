@@ -19,7 +19,7 @@ namespace MyPhotoBiz.Models
         public string? ProfilePicture { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime? LastModified { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public UserType UserType { get; set; } = UserType.Client;
 
         // Compatibility property: older code referenced IsPhotographer bool
