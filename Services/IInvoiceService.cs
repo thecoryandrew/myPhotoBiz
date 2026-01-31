@@ -25,5 +25,6 @@ namespace MyPhotoBiz.Services
         Task<Invoice?> GetInvoiceByIdAsync(int id);
         Task<Invoice?> GetInvoiceByNumberAsync(string invoiceNumber);
         Task<Invoice> CreateInvoiceAsync(Invoice invoice);
+        Task<bool> DeleteInvoiceAsync(int id);
     }
 }

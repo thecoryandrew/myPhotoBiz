@@ -19,7 +19,7 @@ namespace MyPhotoBiz.Controllers
     // TODO: [FEATURE] Add e-signature integration (DocuSign, HelloSign)
     // TODO: [FEATURE] Add multi-signature support (client + photographer)
     // TODO: [FEATURE] Send email notification when contract is sent for signature
-    // [Authorize]
+    [Authorize]
     public class ContractsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -388,8 +388,9 @@ namespace MyPhotoBiz.Controllers
                 Directory.CreateDirectory(contractsDir);
             }
 
-            // Generate unique filename
-            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(pdfFile.FileName)}";
+            // Generate unique filename with sanitized extension only
+            var safeExt = Path.GetExtension(Path.GetFileName(pdfFile.FileName)) ?? ".pdf";
+            var fileName = $"{Guid.NewGuid()}{safeExt}";
             var filePath = Path.Combine(contractsDir, fileName);
 
             // Save file

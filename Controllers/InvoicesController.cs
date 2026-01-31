@@ -11,6 +11,7 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Controllers
 {
+    [Authorize]
     public class InvoicesController : Controller
     {
         private readonly IInvoiceService _invoiceService;
@@ -268,12 +269,10 @@ namespace MyPhotoBiz.Controllers
             var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
             if (invoice == null) return NotFound();
 
-            // Assuming you have an UpdateInvoiceAsync method that can handle the delete
-            // Or you need to add a DeleteInvoiceAsync method to IInvoiceService
-            invoice.Status = InvoiceStatus.Draft; // Mark as deleted or implement proper delete
-            await _invoiceService.UpdateInvoiceAsync(invoice);
+            var invoiceNumber = invoice.InvoiceNumber;
+            await _invoiceService.DeleteInvoiceAsync(id);
 
-            TempData["SuccessMessage"] = $"Invoice {invoice.InvoiceNumber} has been deleted.";
+            TempData["SuccessMessage"] = $"Invoice {invoiceNumber} has been deleted.";
             return RedirectToAction(nameof(Index));
         }
 

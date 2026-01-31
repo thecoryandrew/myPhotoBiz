@@ -39,11 +39,11 @@ namespace MyPhotoBiz.Controllers
         }
 
         // GET: Roles/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             var vm = new CreateRoleViewModel
             {
-                AvailablePermissions = _rolesService.GetAllAvailablePermissionsAsync().GetAwaiter().GetResult()
+                AvailablePermissions = await _rolesService.GetAllAvailablePermissionsAsync()
             };
             return PartialView("_CreateRoleModal", vm);
         }

@@ -272,14 +272,27 @@ namespace MyPhotoBiz.Controllers
         /// Remove a proof marking
         /// </summary>
         [HttpDelete("remove/{proofId}")]
-        public async Task<IActionResult> RemoveProof(int proofId)
+        public async Task<IActionResult> RemoveProof(int proofId, [FromQuery] string sessionToken)
         {
             try
             {
+                if (string.IsNullOrEmpty(sessionToken))
+                    return BadRequest(new { success = false, message = "Session token is required" });
+
+                var session = await _context.GallerySessions
+                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
+
+                if (session == null)
+                    return Unauthorized(new { success = false, message = "Invalid session" });
+
                 var proof = await _context.Proofs.FindAsync(proofId);
 
                 if (proof == null)
                     return NotFound(new { success = false, message = "Proof not found" });
+
+                // Verify the proof belongs to this session
+                if (proof.GallerySessionId != session.Id)
+                    return Unauthorized(new { success = false, message = "Access denied" });
 
                 _context.Proofs.Remove(proof);
                 await _context.SaveChangesAsync();

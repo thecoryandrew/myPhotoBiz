@@ -278,6 +278,18 @@ namespace MyPhotoBiz.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> DeleteInvoiceAsync(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.InvoiceItems)
+                .FirstOrDefaultAsync(i => i.Id == id);
+            if (invoice == null) return false;
+
+            _context.Invoices.Remove(invoice);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         #endregion
 
         #region Helpers
