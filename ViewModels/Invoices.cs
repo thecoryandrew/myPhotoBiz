@@ -63,6 +63,9 @@ namespace MyPhotoBiz.ViewModels
     public class InvoiceItemViewModel
     {
         public int Id { get; set; }
+
+        [Required(ErrorMessage = "Item description is required")]
+        [StringLength(500)]
         public string Description { get; set; } = string.Empty;
 
         [Range(1, int.MaxValue)]
