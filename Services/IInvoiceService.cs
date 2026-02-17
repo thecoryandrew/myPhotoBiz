@@ -18,7 +18,8 @@ namespace MyPhotoBiz.Services
         Task SendInvoiceReminderAsync(int invoiceId);
         Task SendOverdueNoticeAsync(int invoiceId);
         Task SendPaymentConfirmationAsync(int invoiceId);
-        Task ApplyPaymentAsync(int invoiceId, decimal amount, DateTime paidDate);
+        Task<Payment> ApplyPaymentAsync(int invoiceId, decimal amount, DateTime paidDate, PaymentMethod method = PaymentMethod.Other, string? transactionId = null, string? notes = null);
+        Task<IEnumerable<Payment>> GetPaymentsByInvoiceIdAsync(int invoiceId);
         Task<IEnumerable<Invoice>> GetInvoicesByPhotoShootIdAsync(int photoShootId);
         Task MarkInvoiceAsPaidAsync(int invoiceId, DateTime paidDate);  
         Task<IEnumerable<Invoice>> GetAllInvoicesAsync();

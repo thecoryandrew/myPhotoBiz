@@ -5,7 +5,7 @@ using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Services
 {
-    // TODO: [CRITICAL] ConvertToPhotoShootAsync allows conversion without photographer assigned
+    // (resolved) ConvertToPhotoShootAsync now requires photographer assignment before conversion
     // TODO: [HIGH] Add past date validation in CreateBookingRequestAsync
     // TODO: [HIGH] ConfirmBookingAsync should require photographer assignment
     // TODO: [HIGH] Auto-generate draft Invoice when converting to PhotoShoot
@@ -259,6 +259,9 @@ namespace MyPhotoBiz.Services
 
             if (request.PhotoShootId.HasValue)
                 throw new InvalidOperationException("This booking has already been converted to a photo shoot.");
+
+            if (!request.PhotographerProfileId.HasValue)
+                throw new InvalidOperationException("A photographer must be assigned before converting a booking to a photo shoot.");
 
             var durationHours = (int)request.EstimatedDurationHours;
             var durationMinutes = (int)((request.EstimatedDurationHours - durationHours) * 60);

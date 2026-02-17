@@ -5,14 +5,10 @@ using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Services
 {
-    // TODO: [CRITICAL-DATA] ApplyPaymentAsync overwrites invoice.Amount - should create separate Payment records
-    // TODO: [HIGH] Create Payment model to track payment history (amount, date, method, transactionId)
     // TODO: [HIGH] Add DeleteInvoiceAsync method - currently only soft-deletes to Draft status
-    // TODO: [HIGH] Add partial payment support with PartiallyPaid status
     // TODO: [HIGH] Add Refund functionality with Refunded status
     // TODO: [MEDIUM] Add invoice status transition validation (state machine)
     // TODO: [MEDIUM] Add scheduled job to auto-mark overdue invoices
-    // TODO: [FEATURE] Add PaymentMethod tracking (cash, card, bank transfer, etc.)
     // TODO: [FEATURE] Add recurring invoice support
     // TODO: [FEATURE] Add invoice PDF generation with branding
     public class InvoiceService : IInvoiceService
@@ -42,6 +38,7 @@ namespace MyPhotoBiz.Services
                 .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .Include(i => i.InvoiceItems)
+                .Include(i => i.Payments)
                 .FirstOrDefaultAsync(i => i.Id == id);
         }
 
@@ -196,17 +193,54 @@ namespace MyPhotoBiz.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task ApplyPaymentAsync(int invoiceId, decimal amount, DateTime paidDate)
+        public async Task<Payment> ApplyPaymentAsync(int invoiceId, decimal amount, DateTime paidDate, PaymentMethod method = PaymentMethod.Other, string? transactionId = null, string? notes = null)
         {
-            var invoice = await _context.Invoices.FindAsync(invoiceId);
+            var invoice = await _context.Invoices
+                .Include(i => i.Payments)
+                .FirstOrDefaultAsync(i => i.Id == invoiceId);
             if (invoice == null) throw new InvalidOperationException("Invoice not found");
 
-            invoice.Status = InvoiceStatus.Paid;
-            invoice.PaidDate = paidDate;
-            invoice.Amount = amount;
-            invoice.UpdatedDate = DateTime.Now;
+            if (amount <= 0) throw new ArgumentException("Payment amount must be greater than 0", nameof(amount));
 
+            var payment = new Payment
+            {
+                InvoiceId = invoiceId,
+                Amount = amount,
+                PaymentDate = paidDate,
+                Method = method,
+                TransactionId = transactionId,
+                Notes = notes,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _context.Payments.Add(payment);
+
+            // Recalculate total paid including this new payment
+            var totalPaid = (invoice.Payments?.Sum(p => p.Amount) ?? 0) + amount;
+            var totalDue = invoice.Amount + invoice.Tax;
+
+            if (totalPaid >= totalDue)
+            {
+                invoice.Status = InvoiceStatus.Paid;
+                invoice.PaidDate = paidDate;
+            }
+            else
+            {
+                invoice.Status = InvoiceStatus.PartiallyPaid;
+            }
+
+            invoice.UpdatedDate = DateTime.Now;
             await _context.SaveChangesAsync();
+
+            return payment;
+        }
+
+        public async Task<IEnumerable<Payment>> GetPaymentsByInvoiceIdAsync(int invoiceId)
+        {
+            return await _context.Payments
+                .Where(p => p.InvoiceId == invoiceId)
+                .OrderByDescending(p => p.PaymentDate)
+                .ToListAsync();
         }
 
         #endregion

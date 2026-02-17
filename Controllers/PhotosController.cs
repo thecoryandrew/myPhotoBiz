@@ -6,13 +6,11 @@ using MyPhotoBiz.Services;
 
 namespace MyPhotoBiz.Controllers
 {
-    // TODO: [CRITICAL-SECURITY] Uncomment [Authorize] - photos are currently publicly accessible!
-    // TODO: [SECURITY] Add anonymous user validation in View/Thumbnail actions - currently only checks Client role
     // TODO: [SECURITY] Add rate limiting to prevent photo enumeration attacks
     // TODO: [FEATURE] Add watermarking support for client-facing photos
     // TODO: [FEATURE] Add batch download (ZIP) functionality
     // TODO: [FEATURE] Add photo reordering UI (DisplayOrder property exists but no endpoint)
-    // [Authorize]
+    [Authorize]
     public class PhotosController : Controller
     {
         private readonly IPhotoService _photoService;
@@ -138,9 +136,10 @@ namespace MyPhotoBiz.Controllers
                 return NotFound();
             }
 
-            // Check if client can access this photo
-            if (User.IsInRole("Client"))
+            // Admins and Photographers can access all photos
+            if (!User.IsInRole("Admin") && !User.IsInRole("Photographer"))
             {
+                // Clients can only access their own photos
                 var userId = _userManager.GetUserId(User);
                 var client = await _clientService.GetClientByUserIdAsync(userId!);
                 if (client == null || photo.Album.PhotoShoot.ClientProfileId != client.Id)
@@ -174,9 +173,10 @@ namespace MyPhotoBiz.Controllers
                 return NotFound();
             }
 
-            // Check if client can access this photo
-            if (User.IsInRole("Client"))
+            // Admins and Photographers can access all photos
+            if (!User.IsInRole("Admin") && !User.IsInRole("Photographer"))
             {
+                // Clients can only access their own photos
                 var userId = _userManager.GetUserId(User);
                 var client = await _clientService.GetClientByUserIdAsync(userId!);
                 if (client == null || photo.Album.PhotoShoot.ClientProfileId != client.Id)

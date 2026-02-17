@@ -16,7 +16,6 @@ namespace MyPhotoBiz.Data
     // TODO: [MEDIUM] Add missing indexes: GalleryAccess.ExpiryDate, Photo.ClientProfileId
     // TODO: [MEDIUM] Add unique constraint on ClientProfile email
     // TODO: [MEDIUM] Add CreatedBy/UpdatedBy audit fields to key entities
-    // TODO: [FEATURE] Add Payment model for tracking payment history
     // TODO: [FEATURE] Add EmailTemplate model for customizable notifications
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
@@ -69,6 +68,9 @@ namespace MyPhotoBiz.Data
         public DbSet<ServicePackage> ServicePackages { get; set; }
         public DbSet<PackageAddOn> PackageAddOns { get; set; }
 
+        // Payments
+        public DbSet<Payment> Payments { get; set; }
+
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -87,6 +89,7 @@ namespace MyPhotoBiz.Data
             ConfigureIndexes(modelBuilder);
             ConfigureBookingRelationships(modelBuilder);
             ConfigurePackageRelationships(modelBuilder);
+            ConfigurePaymentRelationships(modelBuilder);
         }
 
         /// <summary>
@@ -644,6 +647,33 @@ namespace MyPhotoBiz.Data
             modelBuilder.Entity<PackageAddOn>()
                 .Property(pa => pa.Price)
                 .HasConversion<double>();
+        }
+
+        /// <summary>
+        /// Configure Payment relationships
+        /// </summary>
+        private void ConfigurePaymentRelationships(ModelBuilder modelBuilder)
+        {
+            // Payment -> Invoice (N:1)
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Invoice)
+                .WithMany(i => i.Payments)
+                .HasForeignKey(p => p.InvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Decimal conversion for SQLite
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Amount)
+                .HasConversion<double>();
+
+            // Indexes
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.InvoiceId)
+                .HasDatabaseName("IX_Payment_InvoiceId");
+
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.PaymentDate)
+                .HasDatabaseName("IX_Payment_PaymentDate");
         }
     }
 }
