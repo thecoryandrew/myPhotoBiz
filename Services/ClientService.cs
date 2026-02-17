@@ -2,13 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyPhotoBiz.Data;
+using MyPhotoBiz.Enums;
 using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Services
 {
-    // TODO: [HIGH] Implement soft delete - currently permanent delete loses all client data
-    // TODO: [HIGH] Add validation before delete (check for active bookings, unpaid invoices)
-    // TODO: [HIGH] Add client status field (Active, Inactive, Archived)
     // TODO: [MEDIUM] Add client categorization/segmentation (VIP, Regular, Prospect)
     // TODO: [MEDIUM] Add search filters by date range, spend amount, activity status
     // TODO: [MEDIUM] Add duplicate client detection
@@ -35,6 +33,7 @@ namespace MyPhotoBiz.Services
                 _logger.LogInformation("Retrieving all clients");
                 return await _context.ClientProfiles
                     .AsNoTracking()
+                    .Where(c => !c.IsDeleted)
                     .Include(c => c.Invoices)
                     .Include(c => c.User)
                     .Include(c => c.ClientBadges)
@@ -63,7 +62,7 @@ namespace MyPhotoBiz.Services
                         .ThenInclude(cb => cb.Badge)
                     .Include(c => c.GalleryAccesses)
                         .ThenInclude(ga => ga.Gallery)
-                    .FirstOrDefaultAsync(c => c.Id == id);
+                    .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
             }
             catch (Exception ex)
             {
@@ -84,7 +83,7 @@ namespace MyPhotoBiz.Services
                         .ThenInclude(cb => cb.Badge)
                     .Include(c => c.GalleryAccesses)
                         .ThenInclude(ga => ga.Gallery)
-                    .FirstOrDefaultAsync(c => c.UserId == userId);
+                    .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsDeleted);
             }
             catch (Exception ex)
             {
@@ -129,6 +128,7 @@ namespace MyPhotoBiz.Services
                 existing.PhoneNumber = clientProfile.PhoneNumber;
                 existing.Address = clientProfile.Address;
                 existing.Notes = clientProfile.Notes;
+                existing.Status = clientProfile.Status;
                 existing.UpdatedDate = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -146,7 +146,7 @@ namespace MyPhotoBiz.Services
         {
             try
             {
-                _logger.LogInformation("Deleting client profile with ID: {ClientId}", id);
+                _logger.LogInformation("Soft-deleting client profile with ID: {ClientId}", id);
                 var clientProfile = await _context.ClientProfiles.FindAsync(id);
                 if (clientProfile == null)
                 {
@@ -154,12 +154,30 @@ namespace MyPhotoBiz.Services
                     return false;
                 }
 
-                _context.ClientProfiles.Remove(clientProfile);
+                // Validate: check for active bookings
+                var hasActiveBookings = await _context.BookingRequests
+                    .AnyAsync(br => br.ClientProfileId == id &&
+                        (br.Status == BookingStatus.Pending || br.Status == BookingStatus.Confirmed));
+                if (hasActiveBookings)
+                    throw new InvalidOperationException("Cannot delete client with active bookings. Cancel or complete them first.");
+
+                // Validate: check for unpaid invoices
+                var hasUnpaidInvoices = await _context.Invoices
+                    .AnyAsync(i => i.ClientProfileId == id &&
+                        (i.Status == InvoiceStatus.Pending || i.Status == InvoiceStatus.Overdue || i.Status == InvoiceStatus.PartiallyPaid));
+                if (hasUnpaidInvoices)
+                    throw new InvalidOperationException("Cannot delete client with unpaid invoices. Resolve outstanding invoices first.");
+
+                // Soft delete instead of permanent removal
+                clientProfile.IsDeleted = true;
+                clientProfile.Status = ClientStatus.Archived;
+                clientProfile.UpdatedDate = DateTime.UtcNow;
+
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Successfully deleted client profile with ID: {ClientId}", id);
+                _logger.LogInformation("Successfully soft-deleted client profile with ID: {ClientId}", id);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is InvalidOperationException))
             {
                 _logger.LogError(ex, "Error deleting client profile with ID: {ClientId}", id);
                 throw;
@@ -174,9 +192,10 @@ namespace MyPhotoBiz.Services
             return await _context.ClientProfiles
                 .Include(c => c.Invoices)
                 .Include(c => c.User)
-                .Where(c => c.User.FirstName.Contains(searchTerm) ||
+                .Where(c => !c.IsDeleted &&
+                           (c.User.FirstName.Contains(searchTerm) ||
                            c.User.LastName.Contains(searchTerm) ||
-                           c.User.Email!.Contains(searchTerm))
+                           c.User.Email!.Contains(searchTerm)))
                 .OrderBy(c => c.User.LastName)
                 .ThenBy(c => c.User.FirstName)
                 .ToListAsync();

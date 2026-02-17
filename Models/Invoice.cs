@@ -5,11 +5,6 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Models
 {
-    // TODO: [CRITICAL] Amount is overwritten by ApplyPaymentAsync - create separate Payment model
-    // TODO: [HIGH] Add PaymentMethod field (Cash, Card, BankTransfer, PayPal, etc.)
-    // TODO: [HIGH] Add PaymentTransactionId for payment gateway reference
-    // TODO: [HIGH] Add PartiallyPaid status for partial payments
-    // TODO: [HIGH] Add Refunded status and RefundAmount field
     // TODO: [MEDIUM] Add soft delete (IsDeleted flag)
     // TODO: [MEDIUM] Add Currency field for international clients
     // TODO: [MEDIUM] Add ReminderSentDate to track when reminders were sent
@@ -55,10 +50,16 @@ namespace MyPhotoBiz.Models
 
         public ICollection<InvoiceItem>? InvoiceItems { get; set; }
 
-        // Computed property
+        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
+        // Computed properties
         [NotMapped]
         public decimal TotalAmount => Amount + Tax;
 
+        [NotMapped]
+        public decimal TotalPaid => Payments?.Sum(p => p.Amount) ?? 0;
 
+        [NotMapped]
+        public decimal BalanceDue => TotalAmount - TotalPaid;
     }
 }

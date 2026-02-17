@@ -50,7 +50,8 @@ builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPackageService, PackageService>();
 
-// Register Email Sender
+// Register Email Sender with configuration
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();

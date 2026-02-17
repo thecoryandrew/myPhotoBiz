@@ -13,6 +13,8 @@ namespace MyPhotoBiz.Enums
         [Display(Name = "Overdue")]
         Overdue = 3,
         [Display(Name = "Cancelled")]
-        Cancelled = 4
+        Cancelled = 4,
+        [Display(Name = "Partially Paid")]
+        PartiallyPaid = 5
     }
 }
