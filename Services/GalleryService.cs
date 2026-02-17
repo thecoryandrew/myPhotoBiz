@@ -11,9 +11,6 @@ using System.Threading.Tasks;
 
 namespace MyPhotoBiz.Services
 {
-    // TODO: [HIGH-PERF] GetAllGalleriesAsync loads all photos into memory for counting - use SQL COUNT
-    // TODO: [HIGH-PERF] GetGalleryDetailsAsync line 75 loads all photos without pagination
-    // TODO: [HIGH-PERF] Multiple SelectMany().Count() calls cause N+1 queries
     // TODO: [HIGH] GetGalleryAccessUrlAsync returns generic URL - needs gallery-specific token/slug
     // TODO: [HIGH] GrantAccessAsync hardcodes all permissions to true - should be configurable
     // TODO: [MEDIUM] GetGalleryStatsAsync loads entire photo collection to count - use SQL
@@ -37,11 +34,8 @@ namespace MyPhotoBiz.Services
         {
             try
             {
+                // Project directly without Include - EF Core translates counts to SQL subqueries
                 var galleries = await _context.Galleries
-                    .Include(g => g.Albums)
-                        .ThenInclude(a => a.Photos)
-                    .Include(g => g.Sessions)
-                        .ThenInclude(s => s.Proofs)
                     .AsNoTracking()
                     .OrderByDescending(g => g.CreatedDate)
                     .Select(g => new GalleryListItemViewModel
@@ -54,7 +48,7 @@ namespace MyPhotoBiz.Services
                         IsActive = g.IsActive,
                         PhotoCount = g.Albums.SelectMany(a => a.Photos).Count(),
                         SessionCount = g.Sessions.Count,
-                        TotalProofs = g.Sessions.Where(s => s.Proofs != null).SelectMany(s => s.Proofs).Count(),
+                        TotalProofs = g.Sessions.SelectMany(s => s.Proofs).Count(),
                         LastAccessDate = g.Sessions.Any() ? g.Sessions.Max(s => s.LastAccessDate) : (DateTime?)null
                     })
                     .ToListAsync();
@@ -72,18 +66,71 @@ namespace MyPhotoBiz.Services
         {
             try
             {
+                // Query gallery metadata and aggregate counts via SQL (no full photo load)
                 var gallery = await _context.Galleries
-                    .Include(g => g.Albums)
-                        .ThenInclude(a => a.Photos)
-                    .Include(g => g.Sessions)
-                        .ThenInclude(s => s.Proofs)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(g => g.Id == id);
 
                 if (gallery == null)
                     return null;
 
-                var allPhotos = gallery.Albums.SelectMany(a => a.Photos).ToList();
+                // Compute counts via SQL instead of loading all entities into memory
+                var photoCount = await _context.Galleries
+                    .Where(g => g.Id == id)
+                    .SelectMany(g => g.Albums.SelectMany(a => a.Photos))
+                    .CountAsync();
+
+                var totalSessions = await _context.GallerySessions
+                    .CountAsync(s => s.GalleryId == id);
+
+                var activeSessions = await _context.GallerySessions
+                    .CountAsync(s => s.GalleryId == id && s.LastAccessDate > DateTime.UtcNow.AddHours(-24));
+
+                var lastAccessDate = await _context.GallerySessions
+                    .Where(s => s.GalleryId == id)
+                    .Select(s => (DateTime?)s.LastAccessDate)
+                    .MaxAsync();
+
+                var totalProofs = await _context.Proofs
+                    .CountAsync(p => p.Session != null && p.Session.GalleryId == id);
+
+                var totalFavorites = await _context.Proofs
+                    .CountAsync(p => p.Session != null && p.Session.GalleryId == id && p.IsFavorite);
+
+                var totalEditingRequests = await _context.Proofs
+                    .CountAsync(p => p.Session != null && p.Session.GalleryId == id && p.IsMarkedForEditing);
+
+                // Load only first page of photos (limit to 100)
+                var photos = await _context.Galleries
+                    .Where(g => g.Id == id)
+                    .SelectMany(g => g.Albums.SelectMany(a => a.Photos))
+                    .AsNoTracking()
+                    .Take(100)
+                    .Select(p => new PhotoViewModel
+                    {
+                        Id = p.Id,
+                        Title = p.Title ?? p.FileName ?? "",
+                        ThumbnailPath = p.ThumbnailPath ?? "",
+                        FullImagePath = p.FullImagePath ?? ""
+                    })
+                    .ToListAsync();
+
+                // Load only recent sessions (limit to 10)
+                var recentSessions = await _context.GallerySessions
+                    .Where(s => s.GalleryId == id)
+                    .Include(s => s.Proofs)
+                    .AsNoTracking()
+                    .OrderByDescending(s => s.CreatedDate)
+                    .Take(10)
+                    .Select(s => new GallerySessionViewModel
+                    {
+                        Id = s.Id,
+                        SessionToken = s.SessionToken,
+                        CreatedDate = s.CreatedDate,
+                        LastAccessDate = s.LastAccessDate,
+                        ProofCount = s.Proofs != null ? s.Proofs.Count : 0
+                    })
+                    .ToListAsync();
 
                 var viewModel = new GalleryDetailsViewModel
                 {
@@ -94,31 +141,15 @@ namespace MyPhotoBiz.Services
                     ExpiryDate = gallery.ExpiryDate,
                     IsActive = gallery.IsActive,
                     BrandColor = gallery.BrandColor,
-                    PhotoCount = allPhotos.Count,
-                    Photos = allPhotos.Select(p => new PhotoViewModel
-                    {
-                        Id = p.Id,
-                        Title = p.Title ?? p.FileName ?? "",
-                        ThumbnailPath = p.ThumbnailPath ?? "",
-                        FullImagePath = p.FullImagePath ?? ""
-                    }).ToList(),
-                    TotalSessions = gallery.Sessions.Count,
-                    ActiveSessions = gallery.Sessions.Count(s => s.LastAccessDate > DateTime.UtcNow.AddHours(-24)),
-                    LastAccessDate = gallery.Sessions.Any() ? gallery.Sessions.Max(s => s.LastAccessDate) : (DateTime?)null,
-                    RecentSessions = gallery.Sessions
-                        .OrderByDescending(s => s.CreatedDate)
-                        .Take(10)
-                        .Select(s => new GallerySessionViewModel
-                        {
-                            Id = s.Id,
-                            SessionToken = s.SessionToken,
-                            CreatedDate = s.CreatedDate,
-                            LastAccessDate = s.LastAccessDate,
-                            ProofCount = s.Proofs?.Count ?? 0
-                        }).ToList(),
-                    TotalProofs = gallery.Sessions.Where(s => s.Proofs != null).SelectMany(s => s.Proofs).Count(),
-                    TotalFavorites = gallery.Sessions.Where(s => s.Proofs != null).SelectMany(s => s.Proofs).Count(p => p.IsFavorite),
-                    TotalEditingRequests = gallery.Sessions.Where(s => s.Proofs != null).SelectMany(s => s.Proofs).Count(p => p.IsMarkedForEditing),
+                    PhotoCount = photoCount,
+                    Photos = photos,
+                    TotalSessions = totalSessions,
+                    ActiveSessions = activeSessions,
+                    LastAccessDate = lastAccessDate,
+                    RecentSessions = recentSessions,
+                    TotalProofs = totalProofs,
+                    TotalFavorites = totalFavorites,
+                    TotalEditingRequests = totalEditingRequests,
                     AccessUrl = "" // Will be set by controller with base URL
                 };
 

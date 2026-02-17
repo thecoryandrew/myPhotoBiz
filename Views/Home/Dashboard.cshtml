@@ -1,8 +1,4 @@
 @*
-    TODO: [HIGH] Add pending bookings card with action items
-    TODO: [HIGH] Add contracts awaiting signature alert
-    TODO: [HIGH] Add overdue invoices warning with aging
-    TODO: [MEDIUM] Add today's schedule summary
     TODO: [MEDIUM] Add recent activity timeline
     TODO: [MEDIUM] Add quick action buttons (new booking, new client, etc.)
     TODO: [FEATURE] Add comparison metrics (vs last month/year)
@@ -121,6 +117,102 @@
         </div>
     </div>
 </div>
+
+@if (Model.PendingBookingsCount > 0 || Model.ContractsAwaitingSignature > 0 || Model.OverdueInvoicesCount > 0 || Model.TodayShootsCount > 0 || Model.GalleriesExpiringSoonCount > 0)
+{
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header border-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Action Items</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if (Model.PendingBookingsCount > 0)
+                    {
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Index", "Bookings")" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded bg-info-subtle">
+                                    <i class="ti ti-calendar-event fs-3 text-info me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 text-info">@Model.PendingBookingsCount Pending Booking(s)</h6>
+                                        <small class="text-muted">Awaiting review</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                    @if (Model.ContractsAwaitingSignature > 0)
+                    {
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Index", "Contracts")" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded bg-warning-subtle">
+                                    <i class="ti ti-file-certificate fs-3 text-warning me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 text-warning">@Model.ContractsAwaitingSignature Contract(s)</h6>
+                                        <small class="text-muted">Awaiting signature</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                    @if (Model.OverdueInvoicesCount > 0)
+                    {
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Index", "Invoices")" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded bg-danger-subtle">
+                                    <i class="ti ti-alert-triangle fs-3 text-danger me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 text-danger">@Model.OverdueInvoicesCount Overdue Invoice(s)</h6>
+                                        <small class="text-muted">@Model.OverdueInvoicesAmount.ToString("C") outstanding</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                    @if (Model.TodayShootsCount > 0)
+                    {
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Calendar", "PhotoShoots")" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded bg-primary-subtle">
+                                    <i class="ti ti-camera fs-3 text-primary me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 text-primary">@Model.TodayShootsCount Shoot(s) Today</h6>
+                                        <small class="text-muted">
+                                            @foreach (var shoot in Model.TodaysShoots.Take(2))
+                                            {
+                                                <span>@shoot.ScheduledDate.ToString("h:mm tt") - @shoot.Title</span><br/>
+                                            }
+                                            @if (Model.TodayShootsCount > 2)
+                                            {
+                                                <span>+@(Model.TodayShootsCount - 2) more</span>
+                                            }
+                                        </small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                    @if (Model.GalleriesExpiringSoonCount > 0)
+                    {
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Index", "Galleries")" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded bg-secondary-subtle">
+                                    <i class="ti ti-photo fs-3 text-secondary me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 text-secondary">@Model.GalleriesExpiringSoonCount Gallery(ies)</h6>
+                                        <small class="text-muted">Expiring within 7 days</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
 
 <div class="row">
     <!-- Revenue Overview Chart -->

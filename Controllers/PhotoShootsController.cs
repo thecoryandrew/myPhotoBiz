@@ -10,7 +10,6 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Controllers
 {
-    // TODO: [HIGH] Calendar Move action doesn't update EndTime field
     // TODO: [HIGH] CreateAjax/UpdateAjax lack server-side validation
     // TODO: [HIGH] Uses PhotographerId (string) but should use PhotographerProfileId (int)
     // TODO: [MEDIUM] Add past date validation when creating/updating shoots
@@ -271,7 +270,7 @@ namespace MyPhotoBiz.Controllers
                 id = ps.Id,
                 title = ps.Title,
                 start = ps.ScheduledDate.ToString("s"),
-                end = ps.ScheduledDate.AddHours(ps.DurationHours).ToString("s"),
+                end = ps.EndTime.ToString("s"),
                 extendedProps = new
                 {
                     description = ps.Description,
@@ -296,8 +295,11 @@ namespace MyPhotoBiz.Controllers
            var shoot = await _photoShootService.GetPhotoShootByIdAsync(id);
             if (shoot == null) return NotFound();
 
+            var duration = end - start;
             shoot.ScheduledDate = start;
-            shoot.DurationHours = (int)(end - start).TotalHours;
+            shoot.EndTime = end;
+            shoot.DurationHours = (int)duration.TotalHours;
+            shoot.DurationMinutes = (int)(duration.TotalMinutes % 60);
             shoot.UpdatedDate = DateTime.Now;
 
             await _photoShootService.UpdatePhotoShootAsync(shoot);

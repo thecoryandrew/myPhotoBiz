@@ -23,6 +23,15 @@ namespace MyPhotoBiz.ViewModels
         public IEnumerable<Invoice> RecentInvoices { get; set; } = new List<Invoice>();
         public IEnumerable<ClientProfile> RecentClients { get; set; } = new List<ClientProfile>();
 
+        // Action items
+        public int PendingBookingsCount { get; set; } = 0;
+        public int ContractsAwaitingSignature { get; set; } = 0;
+        public int OverdueInvoicesCount { get; set; } = 0;
+        public decimal OverdueInvoicesAmount { get; set; } = 0m;
+        public int TodayShootsCount { get; set; } = 0;
+        public IEnumerable<PhotoShoot> TodaysShoots { get; set; } = new List<PhotoShoot>();
+        public int GalleriesExpiringSoonCount { get; set; } = 0;
+
         // Chart data
         public IDictionary<string, decimal> MonthlyRevenueData { get; set; } = new Dictionary<string, decimal>();
         public IDictionary<string, int> PhotoshootStatusData { get; set; } = new Dictionary<string, int>();

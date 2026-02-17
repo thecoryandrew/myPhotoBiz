@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Models
 {
@@ -20,6 +21,10 @@ namespace MyPhotoBiz.Models
         public string? Address { get; set; }
 
         public string Notes { get; set; } = string.Empty;
+
+        public ClientStatus Status { get; set; } = ClientStatus.Active;
+
+        public bool IsDeleted { get; set; } = false;
 
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
