@@ -9,11 +9,13 @@ namespace MyPhotoBiz.Services
    {
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _env;
+    private readonly IActivityService _activityService;
 
-    public FileService(ApplicationDbContext context, IWebHostEnvironment env)
+    public FileService(ApplicationDbContext context, IWebHostEnvironment env, IActivityService activityService)
     {
         _context = context;
         _env = env;
+        _activityService = activityService;
     }
 
         public async Task<IEnumerable<FileItem>> GetFilesAsync(string filterType, int page, int pageSize)
@@ -37,7 +39,10 @@ namespace MyPhotoBiz.Services
             if (!Directory.Exists(uploadPath))
                 Directory.CreateDirectory(uploadPath);
 
-            var filePath = Path.Combine(uploadPath, file.FileName);
+            // Sanitize filename: use GUID to prevent path traversal and overwrites
+            var originalName = Path.GetFileName(file.FileName); // strip directory components
+            var safeFileName = $"{Guid.NewGuid()}{Path.GetExtension(originalName)}";
+            var filePath = Path.Combine(uploadPath, safeFileName);
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
@@ -45,10 +50,10 @@ namespace MyPhotoBiz.Services
 
             var fileItem = new FileItem
             {
-                Name = file.FileName,
-                Type = Path.GetExtension(file.FileName).Trim('.').ToUpper(),
+                Name = originalName,
+                Type = Path.GetExtension(originalName).Trim('.').ToUpper(),
                 Size = file.Length,
-                Modified = DateTime.Now,
+                Modified = DateTime.UtcNow,
                 Owner = owner,
                 FilePath = filePath
             };
@@ -62,11 +67,20 @@ namespace MyPhotoBiz.Services
             var fileItem = await _context.Files.FindAsync(id);
             if (fileItem != null)
             {
+                var fileName = fileItem.Name;
                 if (System.IO.File.Exists(fileItem.FilePath))
                     System.IO.File.Delete(fileItem.FilePath);
 
                 _context.Files.Remove(fileItem);
                 await _context.SaveChangesAsync();
+
+                // Audit log
+                await _activityService.LogActivityAsync(
+                    "Deleted",
+                    "File",
+                    id,
+                    fileName,
+                    $"File '{fileName}' was deleted");
             }
         }
     }

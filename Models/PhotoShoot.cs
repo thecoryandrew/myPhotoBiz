@@ -43,8 +43,8 @@ namespace MyPhotoBiz.Models
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
 
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-        public DateTime UpdatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
 
         public string? Notes { get; set; }
 

@@ -7,7 +7,7 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Controllers
 {
-    //[Authorize]
+    [Authorize(Roles = "Admin")]
     public class BadgesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -120,6 +120,7 @@ namespace MyPhotoBiz.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SeedDefaultBadges()
         {
             try
@@ -158,6 +159,7 @@ namespace MyPhotoBiz.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AwardNewUserBadgeToExisting()
         {
             try
@@ -200,7 +202,7 @@ namespace MyPhotoBiz.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Awarded New User badge to {clientProfilesWithoutBadge.Count} existing clients");
+                _logger.LogInformation("Awarded New User badge to {Count} existing clients", clientProfilesWithoutBadge.Count);
                 TempData["Success"] = $"Successfully awarded New User badge to {clientProfilesWithoutBadge.Count} existing clients!";
                 return RedirectToAction(nameof(Index));
             }

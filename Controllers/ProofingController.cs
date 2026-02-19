@@ -26,6 +26,30 @@ namespace MyPhotoBiz.Controllers
         }
 
         /// <summary>
+        /// Validates session token and checks expiry. Returns null if invalid/expired.
+        /// </summary>
+        private async Task<GallerySession?> ValidateSessionAsync(string? sessionToken)
+        {
+            if (string.IsNullOrEmpty(sessionToken))
+                return null;
+
+            var session = await _context.GallerySessions
+                .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
+
+            if (session == null)
+                return null;
+
+            // Check if session has expired
+            if (session.IsExpired)
+            {
+                _logger.LogWarning("Session {SessionToken} has expired", sessionToken);
+                return null;
+            }
+
+            return session;
+        }
+
+        /// <summary>
         /// Mark or unmark a photo as favorite
         /// </summary>
         [HttpPost("mark-favorite")]
@@ -33,14 +57,9 @@ namespace MyPhotoBiz.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token is required" });
-
-                var session = await _context.GallerySessions
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
+                var session = await ValidateSessionAsync(sessionToken);
                 if (session == null)
-                    return Unauthorized(new { success = false, message = "Invalid session" });
+                    return Unauthorized(new { success = false, message = "Invalid or expired session" });
 
                 // Verify photo belongs to an album in the gallery
                 var photo = await _context.Photos
@@ -90,14 +109,9 @@ namespace MyPhotoBiz.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token is required" });
-
-                var session = await _context.GallerySessions
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
+                var session = await ValidateSessionAsync(sessionToken);
                 if (session == null)
-                    return Unauthorized(new { success = false, message = "Invalid session" });
+                    return Unauthorized(new { success = false, message = "Invalid or expired session" });
 
                 // Verify photo belongs to an album in the gallery
                 var photo = await _context.Photos
@@ -149,14 +163,9 @@ namespace MyPhotoBiz.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token is required" });
-
-                var session = await _context.GallerySessions
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
+                var session = await ValidateSessionAsync(sessionToken);
                 if (session == null)
-                    return Unauthorized(new { success = false, message = "Invalid session" });
+                    return Unauthorized(new { success = false, message = "Invalid or expired session" });
 
                 var favorites = await _context.Proofs
                     .Where(p => p.GallerySessionId == session.Id && p.IsFavorite && p.Photo != null)
@@ -188,14 +197,9 @@ namespace MyPhotoBiz.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token is required" });
-
-                var session = await _context.GallerySessions
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
+                var session = await ValidateSessionAsync(sessionToken);
                 if (session == null)
-                    return Unauthorized(new { success = false, message = "Invalid session" });
+                    return Unauthorized(new { success = false, message = "Invalid or expired session" });
 
                 var editingPhotos = await _context.Proofs
                     .Where(p => p.GallerySessionId == session.Id && p.IsMarkedForEditing && p.Photo != null)
@@ -228,14 +232,9 @@ namespace MyPhotoBiz.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(sessionToken))
-                    return BadRequest(new { success = false, message = "Session token is required" });
-
-                var session = await _context.GallerySessions
-                    .FirstOrDefaultAsync(s => s.SessionToken == sessionToken);
-
+                var session = await ValidateSessionAsync(sessionToken);
                 if (session == null)
-                    return Unauthorized(new { success = false, message = "Invalid session" });
+                    return Unauthorized(new { success = false, message = "Invalid or expired session" });
 
                 var favoriteCount = await _context.Proofs
                     .CountAsync(p => p.GallerySessionId == session.Id && p.IsFavorite);
@@ -272,14 +271,22 @@ namespace MyPhotoBiz.Controllers
         /// Remove a proof marking
         /// </summary>
         [HttpDelete("remove/{proofId}")]
-        public async Task<IActionResult> RemoveProof(int proofId)
+        public async Task<IActionResult> RemoveProof(int proofId, [FromQuery] string sessionToken)
         {
             try
             {
+                var session = await ValidateSessionAsync(sessionToken);
+                if (session == null)
+                    return Unauthorized(new { success = false, message = "Invalid or expired session" });
+
                 var proof = await _context.Proofs.FindAsync(proofId);
 
                 if (proof == null)
                     return NotFound(new { success = false, message = "Proof not found" });
+
+                // Verify the proof belongs to this session
+                if (proof.GallerySessionId != session.Id)
+                    return Unauthorized(new { success = false, message = "Access denied" });
 
                 _context.Proofs.Remove(proof);
                 await _context.SaveChangesAsync();

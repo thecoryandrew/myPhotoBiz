@@ -65,7 +65,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading proof details for ID: {id}");
+                _logger.LogError(ex, "Error loading proof details for ID: {ProofId}", id);
                 return StatusCode(500, "An error occurred while loading proof details.");
             }
         }
@@ -99,7 +99,7 @@ namespace MyPhotoBiz.Controllers
                 {
                     var csvContent = await _proofService.ExportProofsToCsvAsync(filter);
                     var bytes = Encoding.UTF8.GetBytes(csvContent);
-                    var fileName = $"proofs_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                    var fileName = $"proofs_export_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
 
                     return File(bytes, "text/csv", fileName);
                 }
@@ -132,7 +132,7 @@ namespace MyPhotoBiz.Controllers
                     });
                 }
 
-                _logger.LogInformation($"Proof deleted: ID {id}");
+                _logger.LogInformation("Proof deleted: ID {ProofId}", id);
 
                 return Json(new
                 {
@@ -142,7 +142,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting proof ID: {id}");
+                _logger.LogError(ex, "Error deleting proof ID: {ProofId}", id);
                 return Json(new
                 {
                     success = false,
@@ -178,7 +178,7 @@ namespace MyPhotoBiz.Controllers
                     });
                 }
 
-                _logger.LogInformation($"Bulk delete: {ids.Count} proofs deleted");
+                _logger.LogInformation("Bulk delete: {Count} proofs deleted", ids.Count);
 
                 return Json(new
                 {
@@ -212,7 +212,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving proofs for gallery ID: {galleryId}");
+                _logger.LogError(ex, "Error retrieving proofs for gallery ID: {GalleryId}", galleryId);
                 return Json(new
                 {
                     success = false,

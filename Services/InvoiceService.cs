@@ -18,10 +18,12 @@ namespace MyPhotoBiz.Services
     public class InvoiceService : IInvoiceService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IActivityService _activityService;
 
-        public InvoiceService(ApplicationDbContext context)
+        public InvoiceService(ApplicationDbContext context, IActivityService activityService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _activityService = activityService ?? throw new ArgumentNullException(nameof(activityService));
         }
 
         #region Get Methods
@@ -151,7 +153,7 @@ namespace MyPhotoBiz.Services
             if (string.IsNullOrEmpty(invoice.InvoiceNumber))
                 invoice.InvoiceNumber = await GenerateInvoiceNumberAsync();
 
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
@@ -164,7 +166,7 @@ namespace MyPhotoBiz.Services
             if (invoice == null) throw new InvalidOperationException("Invoice not found");
 
             invoice.Status = status;
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             if (status == InvoiceStatus.Paid && paidDate.HasValue)
                 invoice.PaidDate = paidDate;
@@ -178,7 +180,7 @@ namespace MyPhotoBiz.Services
             foreach (var invoice in invoices)
             {
                 invoice.Status = status;
-                invoice.UpdatedDate = DateTime.Now;
+                invoice.UpdatedDate = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -191,7 +193,7 @@ namespace MyPhotoBiz.Services
 
             invoice.Status = InvoiceStatus.Paid;
             invoice.PaidDate = paidDate;
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }
@@ -204,7 +206,7 @@ namespace MyPhotoBiz.Services
             invoice.Status = InvoiceStatus.Paid;
             invoice.PaidDate = paidDate;
             invoice.Amount = amount;
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }
@@ -229,7 +231,7 @@ namespace MyPhotoBiz.Services
                 Tax = invoice.Tax,
                 Notes = invoice.Notes,
                 InvoiceNumber = await GenerateInvoiceNumberAsync(),
-                UpdatedDate = DateTime.Now,
+                UpdatedDate = DateTime.UtcNow,
                 InvoiceItems = invoice.InvoiceItems?.Select(ii => new InvoiceItem
                 {
                     Description = ii.Description,
@@ -273,9 +275,31 @@ namespace MyPhotoBiz.Services
         {
             if (invoice == null) throw new ArgumentNullException(nameof(invoice));
 
-            invoice.UpdatedDate = DateTime.Now;
+            invoice.UpdatedDate = DateTime.UtcNow;
             _context.Invoices.Update(invoice);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteInvoiceAsync(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.InvoiceItems)
+                .FirstOrDefaultAsync(i => i.Id == id);
+            if (invoice == null) return false;
+
+            var invoiceNumber = invoice.InvoiceNumber;
+            _context.Invoices.Remove(invoice);
+            await _context.SaveChangesAsync();
+
+            // Audit log
+            await _activityService.LogActivityAsync(
+                "Deleted",
+                "Invoice",
+                id,
+                invoiceNumber,
+                $"Invoice '{invoiceNumber}' was deleted");
+
+            return true;
         }
 
         #endregion

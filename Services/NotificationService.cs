@@ -53,7 +53,7 @@ namespace MyPhotoBiz.Services
             if (notification != null && !notification.IsRead)
             {
                 notification.IsRead = true;
-                notification.ReadDate = DateTime.Now;
+                notification.ReadDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
         }
@@ -67,7 +67,7 @@ namespace MyPhotoBiz.Services
             foreach (var notification in unreadNotifications)
             {
                 notification.IsRead = true;
-                notification.ReadDate = DateTime.Now;
+                notification.ReadDate = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -85,7 +85,7 @@ namespace MyPhotoBiz.Services
 
         public async Task DeleteOldNotificationsAsync(int daysOld = 30)
         {
-            var cutoffDate = DateTime.Now.AddDays(-daysOld);
+            var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
             var oldNotifications = await _context.Notifications
                 .Where(n => n.CreatedDate < cutoffDate && n.IsRead)
                 .ToListAsync();

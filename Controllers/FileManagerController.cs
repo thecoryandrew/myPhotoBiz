@@ -70,6 +70,7 @@ public class FileManagerController : Controller
 
     [HttpDelete]
     [Route("api/files/{id}")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteApi(int id)
     {
         var fileItem = await _fileService.GetFileAsync(id);

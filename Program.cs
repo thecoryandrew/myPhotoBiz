@@ -49,6 +49,7 @@ builder.Services.AddScoped<IProofService, ProofService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPackageService, PackageService>();
+builder.Services.AddScoped<IContractService, ContractService>();
 
 // Register Email Sender
 builder.Services.AddTransient<IEmailSender, EmailSender>();
@@ -63,6 +64,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    await next();
+});
+
 app.UseStaticFiles();
 
 app.UseRouting();

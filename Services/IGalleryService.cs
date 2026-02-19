@@ -35,5 +35,11 @@ namespace MyPhotoBiz.Services
         // Analytics
         Task<GalleryStatsSummaryViewModel> GetGalleryStatsAsync();
         Task<string> GetGalleryAccessUrlAsync(int galleryId, string baseUrl);
+
+        // Client-facing gallery access
+        Task<List<ClientGalleryViewModel>> GetClientAccessibleGalleriesAsync(int clientProfileId);
+        Task<GallerySession?> GetOrCreateSessionAsync(int galleryId, string userId);
+        Task<List<Photo>> GetGalleryPhotosAsync(int galleryId);
+        Task<bool> CanClientDownloadAsync(int galleryId, int clientProfileId);
     }
 }

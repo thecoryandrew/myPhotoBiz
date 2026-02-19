@@ -44,41 +44,11 @@ namespace MyPhotoBiz.Controllers
 
             if (clientProfile == null)
             {
-                _logger.LogWarning($"No client profile found for user: {userId}");
+                _logger.LogWarning("No client profile found for user: {UserId}", userId);
                 return View("NoAccess");
             }
 
-            // Get galleries the client has access to
-            var accessibleGalleries = await _context.GalleryAccesses
-                .Include(ga => ga.Gallery)
-                    .ThenInclude(g => g.Albums)
-                        .ThenInclude(a => a.Photos)
-                .Where(ga => ga.ClientProfileId == clientProfile.Id &&
-                            ga.IsActive &&
-                            (!ga.ExpiryDate.HasValue || ga.ExpiryDate > DateTime.UtcNow) &&
-                            ga.Gallery.IsActive &&
-                            ga.Gallery.ExpiryDate > DateTime.UtcNow)
-                .Select(ga => new
-                {
-                    Gallery = ga.Gallery,
-                    Access = ga
-                })
-                .ToListAsync();
-
-            var viewModel = accessibleGalleries.Select(item => new MyPhotoBiz.ViewModels.ClientGalleryViewModel
-            {
-                GalleryId = item.Gallery.Id,
-                Name = item.Gallery.Name,
-                Description = item.Gallery.Description,
-                BrandColor = item.Gallery.BrandColor,
-                PhotoCount = item.Gallery.Albums.SelectMany(a => a.Photos).Count(),
-                ExpiryDate = item.Gallery.ExpiryDate,
-                GrantedDate = item.Access.GrantedDate,
-                CanDownload = item.Access.CanDownload,
-                CanProof = item.Access.CanProof,
-                CanOrder = item.Access.CanOrder
-            }).ToList();
-
+            var viewModel = await _galleryService.GetClientAccessibleGalleriesAsync(clientProfile.Id);
             return View(viewModel);
         }
 
@@ -98,55 +68,22 @@ namespace MyPhotoBiz.Controllers
                 var hasAccess = await _galleryService.ValidateUserAccessAsync(id, userId);
                 if (!hasAccess)
                 {
-                    _logger.LogWarning($"User {userId} attempted to access gallery {id} without permission");
+                    _logger.LogWarning("User {UserId} attempted to access gallery {GalleryId} without permission", userId, id);
                     return RedirectToAction("Index");
                 }
 
-                var gallery = await _context.Galleries
-                    .Include(g => g.Albums)
-                        .ThenInclude(a => a.Photos)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.Id == id);
-
+                var gallery = await _galleryService.GetGalleryByIdAsync(id);
                 if (gallery == null || !gallery.IsActive || gallery.ExpiryDate < DateTime.UtcNow)
                 {
                     return RedirectToAction("Index");
                 }
 
-                // Create or update session for tracking
-                var clientProfile = await _context.ClientProfiles
-                    .FirstOrDefaultAsync(cp => cp.UserId == userId);
-
-                if (clientProfile != null)
-                {
-                    var session = await _context.GallerySessions
-                        .FirstOrDefaultAsync(s => s.GalleryId == id && s.UserId == userId);
-
-                    if (session == null)
-                    {
-                        session = new GallerySession
-                        {
-                            GalleryId = id,
-                            UserId = userId,
-                            SessionToken = Guid.NewGuid().ToString(),
-                            CreatedDate = DateTime.UtcNow,
-                            LastAccessDate = DateTime.UtcNow
-                        };
-                        _context.GallerySessions.Add(session);
-                    }
-                    else
-                    {
-                        session.LastAccessDate = DateTime.UtcNow;
-                    }
-                    await _context.SaveChangesAsync();
-
-                    ViewBag.SessionToken = session.SessionToken;
-                }
+                // Create or update session for tracking (with expiry)
+                var session = await _galleryService.GetOrCreateSessionAsync(id, userId);
+                ViewBag.SessionToken = session?.SessionToken;
 
                 // Get photos from all albums in this gallery
-                var photos = gallery.Albums.SelectMany(a => a.Photos)
-                    .OrderBy(p => p.DisplayOrder)
-                    .ToList();
+                var photos = await _galleryService.GetGalleryPhotosAsync(id);
 
                 ViewBag.GalleryName = gallery.Name;
                 ViewBag.BrandColor = gallery.BrandColor ?? "#2c3e50";
@@ -156,7 +93,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error viewing gallery {id}");
+                _logger.LogError(ex, "Error viewing gallery {GalleryId}", id);
                 TempData["Error"] = "An error occurred while loading the gallery. Please try again.";
                 return RedirectToAction("Index");
             }
@@ -178,22 +115,20 @@ namespace MyPhotoBiz.Controllers
                 var hasAccess = await _galleryService.ValidateUserAccessAsync(galleryId, userId);
                 if (!hasAccess)
                 {
-                    _logger.LogWarning($"Download attempt without permission: user {userId}, gallery {galleryId}");
+                    _logger.LogWarning("Download attempt without permission: user {UserId}, gallery {GalleryId}", userId, galleryId);
                     return Unauthorized();
                 }
 
-                // Get gallery access to check download permission
+                // Get client profile to check download permission
                 var clientProfile = await _context.ClientProfiles
                     .FirstOrDefaultAsync(cp => cp.UserId == userId);
 
                 if (clientProfile != null)
                 {
-                    var access = await _context.GalleryAccesses
-                        .FirstOrDefaultAsync(ga => ga.GalleryId == galleryId && ga.ClientProfileId == clientProfile.Id);
-
-                    if (access != null && !access.CanDownload)
+                    var canDownload = await _galleryService.CanClientDownloadAsync(galleryId, clientProfile.Id);
+                    if (!canDownload)
                     {
-                        _logger.LogWarning($"Download not permitted for user {userId} on gallery {galleryId}");
+                        _logger.LogWarning("Download not permitted for user {UserId} on gallery {GalleryId}", userId, galleryId);
                         return Forbid();
                     }
                 }
@@ -207,14 +142,14 @@ namespace MyPhotoBiz.Controllers
 
                 if (photo == null)
                 {
-                    _logger.LogWarning($"Download attempt for non-existent photo: {photoId}");
+                    _logger.LogWarning("Download attempt for non-existent photo: {PhotoId}", photoId);
                     return NotFound();
                 }
 
                 // Validate file path
                 if (string.IsNullOrEmpty(photo.FullImagePath))
                 {
-                    _logger.LogWarning($"Photo has no file path: {photoId}");
+                    _logger.LogWarning("Photo has no file path: {PhotoId}", photoId);
                     return NotFound();
                 }
 
@@ -225,20 +160,20 @@ namespace MyPhotoBiz.Controllers
                 var resolvedPath = Path.GetFullPath(filePath);
                 if (!resolvedPath.StartsWith(fullWwwrootPath))
                 {
-                    _logger.LogWarning($"Path traversal attempt detected: {filePath}");
+                    _logger.LogWarning("Path traversal attempt detected: {FilePath}", filePath);
                     return Unauthorized();
                 }
 
                 if (!System.IO.File.Exists(filePath))
                 {
-                    _logger.LogWarning($"Photo file not found: {filePath}");
+                    _logger.LogWarning("Photo file not found: {FilePath}", filePath);
                     return NotFound();
                 }
 
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
                 var fileName = string.IsNullOrEmpty(photo.Title) ? $"photo_{photo.Id}.jpg" : $"{photo.Title}.jpg";
 
-                _logger.LogInformation($"Photo downloaded: {photo.Id} by user: {userId}");
+                _logger.LogInformation("Photo downloaded: {PhotoId} by user: {UserId}", photo.Id, userId);
 
                 return File(fileBytes, "image/jpeg", fileName);
             }
@@ -271,10 +206,7 @@ namespace MyPhotoBiz.Controllers
                 if (!hasAccess)
                     return Unauthorized(new { success = false, message = "No access to gallery" });
 
-                var gallery = await _context.Galleries
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.Id == galleryId);
-
+                var gallery = await _galleryService.GetGalleryByIdAsync(galleryId);
                 if (gallery == null || !gallery.IsActive || gallery.ExpiryDate < DateTime.UtcNow)
                     return Unauthorized(new { success = false, message = "Gallery expired" });
 
@@ -293,7 +225,8 @@ namespace MyPhotoBiz.Controllers
                         gallery.LogoPath,
                         gallery.ExpiryDate,
                         CreatedDate = session?.CreatedDate,
-                        LastAccessDate = session?.LastAccessDate
+                        LastAccessDate = session?.LastAccessDate,
+                        SessionExpiresAt = session?.ExpiresAt
                     }
                 });
             }
@@ -326,7 +259,7 @@ namespace MyPhotoBiz.Controllers
                 _context.GallerySessions.Remove(session);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Gallery session ended for user {userId} on gallery {galleryId}");
+                _logger.LogInformation("Gallery session ended for user {UserId} on gallery {GalleryId}", userId, galleryId);
 
                 return Ok(new { success = true, message = "Session ended successfully" });
             }

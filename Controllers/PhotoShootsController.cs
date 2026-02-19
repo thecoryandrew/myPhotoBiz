@@ -119,7 +119,7 @@ namespace MyPhotoBiz.Controllers
                 Status = model.Status,
                 Price = model.Price,
                 Notes = model.Notes!,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.UtcNow
             };
 
             await _photoShootService.CreatePhotoShootAsync(shoot);
@@ -184,7 +184,7 @@ namespace MyPhotoBiz.Controllers
             shoot.Status = model.Status;
             shoot.Price = model.Price;
             shoot.Notes = model.Notes!;
-            shoot.UpdatedDate = DateTime.Now;
+            shoot.UpdatedDate = DateTime.UtcNow;
 
             await _photoShootService.UpdatePhotoShootAsync(shoot);
 
@@ -298,7 +298,7 @@ namespace MyPhotoBiz.Controllers
 
             shoot.ScheduledDate = start;
             shoot.DurationHours = (int)(end - start).TotalHours;
-            shoot.UpdatedDate = DateTime.Now;
+            shoot.UpdatedDate = DateTime.UtcNow;
 
             await _photoShootService.UpdatePhotoShootAsync(shoot);
 
@@ -322,7 +322,7 @@ namespace MyPhotoBiz.Controllers
                 Notes = dto.Notes,
                 ClientProfileId = dto.ClientId,
                 PhotographerId = dto.PhotographerId,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.UtcNow
             };
 
             await _photoShootService.CreatePhotoShootAsync(shoot);
@@ -348,7 +348,7 @@ namespace MyPhotoBiz.Controllers
             shoot.Notes = dto.Notes;
             shoot.ClientProfileId = dto.ClientId;
             shoot.PhotographerId = dto.PhotographerId;
-            shoot.UpdatedDate = DateTime.Now;
+            shoot.UpdatedDate = DateTime.UtcNow;
 
             await _photoShootService.UpdatePhotoShootAsync(shoot);
 

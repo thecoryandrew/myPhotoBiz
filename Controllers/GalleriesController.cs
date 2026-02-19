@@ -63,7 +63,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading gallery details for ID: {id}");
+                _logger.LogError(ex, "Error loading gallery details for ID: {GalleryId}", id);
                 return StatusCode(500, "An error occurred while loading gallery details.");
             }
         }
@@ -107,7 +107,7 @@ namespace MyPhotoBiz.Controllers
 
                 var gallery = await _galleryService.CreateGalleryAsync(model);
 
-                _logger.LogInformation($"Gallery created: {gallery.Name} (ID: {gallery.Id})");
+                _logger.LogInformation("Gallery created: {GalleryName} (ID: {GalleryId})", gallery.Name, gallery.Id);
 
                 return Json(new
                 {
@@ -156,7 +156,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading edit gallery modal for ID: {id}");
+                _logger.LogError(ex, "Error loading edit gallery modal for ID: {GalleryId}", id);
                 return StatusCode(500, "An error occurred while loading the form.");
             }
         }
@@ -186,7 +186,7 @@ namespace MyPhotoBiz.Controllers
 
                 var gallery = await _galleryService.UpdateGalleryAsync(model);
 
-                _logger.LogInformation($"Gallery updated: {gallery.Name} (ID: {gallery.Id})");
+                _logger.LogInformation("Gallery updated: {GalleryName} (ID: {GalleryId})", gallery.Name, gallery.Id);
 
                 return Json(new
                 {
@@ -196,7 +196,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating gallery ID: {id}");
+                _logger.LogError(ex, "Error updating gallery ID: {GalleryId}", id);
                 return Json(new
                 {
                     success = false,
@@ -223,7 +223,7 @@ namespace MyPhotoBiz.Controllers
                     });
                 }
 
-                _logger.LogInformation($"Gallery deleted: ID {id}");
+                _logger.LogInformation("Gallery deleted: ID {GalleryId}", id);
 
                 return Json(new
                 {
@@ -233,7 +233,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting gallery ID: {id}");
+                _logger.LogError(ex, "Error deleting gallery ID: {GalleryId}", id);
                 return Json(new
                 {
                     success = false,
@@ -268,7 +268,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error toggling gallery status for ID: {id}");
+                _logger.LogError(ex, "Error toggling gallery status for ID: {GalleryId}", id);
                 return Json(new
                 {
                     success = false,
@@ -297,7 +297,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading sessions for gallery ID: {id}");
+                _logger.LogError(ex, "Error loading sessions for gallery ID: {GalleryId}", id);
                 return StatusCode(500, "An error occurred while loading sessions.");
             }
         }
@@ -328,7 +328,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error ending session ID: {sessionId}");
+                _logger.LogError(ex, "Error ending session ID: {SessionId}", sessionId);
                 return Json(new
                 {
                     success = false,
@@ -357,7 +357,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading access management for gallery ID: {id}");
+                _logger.LogError(ex, "Error loading access management for gallery ID: {GalleryId}", id);
                 return StatusCode(500, "An error occurred.");
             }
         }
@@ -374,7 +374,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error granting access to gallery {galleryId} for client {clientProfileId}");
+                _logger.LogError(ex, "Error granting access to gallery {GalleryId} for client {ClientProfileId}", galleryId, clientProfileId);
                 return Json(new { success = false, message = "An error occurred while granting access." });
             }
         }
@@ -395,7 +395,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error revoking access to gallery {galleryId} from client {clientProfileId}");
+                _logger.LogError(ex, "Error revoking access to gallery {GalleryId} from client {ClientProfileId}", galleryId, clientProfileId);
                 return Json(new { success = false, message = "An error occurred while revoking access." });
             }
         }
@@ -415,7 +415,7 @@ namespace MyPhotoBiz.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error getting access URL for gallery ID: {id}");
+                _logger.LogError(ex, "Error getting access URL for gallery ID: {GalleryId}", id);
                 return Json(new
                 {
                     success = false,

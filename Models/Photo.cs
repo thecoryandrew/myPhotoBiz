@@ -21,7 +21,7 @@ namespace MyPhotoBiz.Models
 
         public string? Description { get; set; }
 
-        public DateTime UploadDate { get; set; } = DateTime.Now;
+        public DateTime UploadDate { get; set; } = DateTime.UtcNow;
 
         public bool IsSelected { get; set; } = false;
 

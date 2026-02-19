@@ -223,7 +223,7 @@ namespace MyPhotoBiz.Services
                     Icon = GetRoleIcon(roleName),
                     ColorClass = GetRoleColorClass(roleName),
                     Permissions = permissions,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 });
             }
 
@@ -253,8 +253,8 @@ namespace MyPhotoBiz.Services
                 Icon = GetRoleIcon(roleName),
                 ColorClass = GetRoleColorClass(roleName),
                 Permissions = permissions,
-                CreatedDate = DateTime.Now,
-                LastUpdated = DateTime.Now
+                CreatedDate = DateTime.UtcNow,
+                LastUpdated = DateTime.UtcNow
             };
         }
 
@@ -297,7 +297,7 @@ namespace MyPhotoBiz.Services
                     Email = user.Email ?? string.Empty,
                     FullName = $"{user.FirstName} {user.LastName}",
                     RoleName = roleName,
-                    LastUpdated = user.LastModified ?? DateTime.Now,
+                    LastUpdated = user.LastModified ?? DateTime.UtcNow,
                     Status = GetUserStatus(user),
                     Avatar = user.ProfilePicture ?? "~/images/users/default-avatar.jpg"
                 });

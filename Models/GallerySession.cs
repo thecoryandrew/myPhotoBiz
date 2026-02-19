@@ -10,6 +10,17 @@ namespace MyPhotoBiz.Models
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime LastAccessDate { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Session expiration time. Null means no expiry (legacy sessions).
+        /// Sessions are extended on activity.
+        /// </summary>
+        public DateTime? ExpiresAt { get; set; }
+
+        /// <summary>
+        /// Returns true if session has expired
+        /// </summary>
+        public bool IsExpired => ExpiresAt.HasValue && ExpiresAt.Value < DateTime.UtcNow;
+
         // Link to authenticated user
         [Required]
         public string UserId { get; set; } = string.Empty;
