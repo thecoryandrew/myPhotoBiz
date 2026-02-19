@@ -10,11 +10,13 @@ namespace MyPhotoBiz.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IActivityService _activityService;
 
-        public PhotoService(ApplicationDbContext context, IWebHostEnvironment environment)
+        public PhotoService(ApplicationDbContext context, IWebHostEnvironment environment, IActivityService activityService)
         {
             _context = context;
             _environment = environment;
+            _activityService = activityService;
         }
 
         public async Task<IEnumerable<Photo>> GetPhotosByAlbumIdAsync(int albumId)
@@ -46,6 +48,8 @@ namespace MyPhotoBiz.Services
             var photo = await _context.Photos.FindAsync(id);
             if (photo == null) return false;
 
+            var photoTitle = photo.Title ?? $"Photo {id}";
+
             // Delete physical file
             if (File.Exists(photo.FilePath))
             {
@@ -58,6 +62,15 @@ namespace MyPhotoBiz.Services
 
             _context.Photos.Remove(photo);
             await _context.SaveChangesAsync();
+
+            // Audit log
+            await _activityService.LogActivityAsync(
+                "Deleted",
+                "Photo",
+                id,
+                photoTitle,
+                $"Photo '{photoTitle}' was deleted");
+
             return true;
         }
 

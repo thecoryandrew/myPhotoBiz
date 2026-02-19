@@ -26,11 +26,13 @@ namespace MyPhotoBiz.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<GalleryService> _logger;
+        private readonly IActivityService _activityService;
 
-        public GalleryService(ApplicationDbContext context, ILogger<GalleryService> logger)
+        public GalleryService(ApplicationDbContext context, ILogger<GalleryService> logger, IActivityService activityService)
         {
             _context = context;
             _logger = logger;
+            _activityService = activityService;
         }
 
         public async Task<IEnumerable<GalleryListItemViewModel>> GetAllGalleriesAsync()
@@ -263,10 +265,19 @@ namespace MyPhotoBiz.Services
                     return false;
 
                 // Remove gallery (this will cascade delete sessions if configured)
+                var galleryName = gallery.Name;
                 _context.Galleries.Remove(gallery);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Gallery deleted: {GalleryName} (ID: {GalleryId})", gallery.Name, id);
+                _logger.LogInformation("Gallery deleted: {GalleryName} (ID: {GalleryId})", galleryName, id);
+
+                // Audit log
+                await _activityService.LogActivityAsync(
+                    "Deleted",
+                    "Gallery",
+                    id,
+                    galleryName,
+                    $"Gallery '{galleryName}' was deleted");
 
                 return true;
             }
@@ -624,6 +635,91 @@ namespace MyPhotoBiz.Services
         {
             var url = $"{baseUrl.TrimEnd('/')}/Gallery/Index";
             return Task.FromResult(url);
+        }
+
+        public async Task<List<ClientGalleryViewModel>> GetClientAccessibleGalleriesAsync(int clientProfileId)
+        {
+            var now = DateTime.UtcNow;
+
+            var accessibleGalleries = await _context.GalleryAccesses
+                .Include(ga => ga.Gallery)
+                    .ThenInclude(g => g.Albums)
+                        .ThenInclude(a => a.Photos)
+                .Where(ga => ga.ClientProfileId == clientProfileId &&
+                            ga.IsActive &&
+                            (!ga.ExpiryDate.HasValue || ga.ExpiryDate > now) &&
+                            ga.Gallery.IsActive &&
+                            ga.Gallery.ExpiryDate > now)
+                .Select(ga => new ClientGalleryViewModel
+                {
+                    GalleryId = ga.Gallery.Id,
+                    Name = ga.Gallery.Name,
+                    Description = ga.Gallery.Description,
+                    BrandColor = ga.Gallery.BrandColor,
+                    PhotoCount = ga.Gallery.Albums.SelectMany(a => a.Photos).Count(),
+                    ExpiryDate = ga.Gallery.ExpiryDate,
+                    GrantedDate = ga.GrantedDate,
+                    CanDownload = ga.CanDownload,
+                    CanProof = ga.CanProof,
+                    CanOrder = ga.CanOrder
+                })
+                .ToListAsync();
+
+            return accessibleGalleries;
+        }
+
+        public async Task<GallerySession?> GetOrCreateSessionAsync(int galleryId, string userId)
+        {
+            var session = await _context.GallerySessions
+                .FirstOrDefaultAsync(s => s.GalleryId == galleryId && s.UserId == userId);
+
+            if (session == null)
+            {
+                session = new GallerySession
+                {
+                    GalleryId = galleryId,
+                    UserId = userId,
+                    SessionToken = Guid.NewGuid().ToString(),
+                    CreatedDate = DateTime.UtcNow,
+                    LastAccessDate = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddHours(24) // Sessions expire after 24 hours
+                };
+                _context.GallerySessions.Add(session);
+            }
+            else
+            {
+                session.LastAccessDate = DateTime.UtcNow;
+                // Extend expiry on activity
+                session.ExpiresAt = DateTime.UtcNow.AddHours(24);
+            }
+
+            await _context.SaveChangesAsync();
+            return session;
+        }
+
+        public async Task<List<Photo>> GetGalleryPhotosAsync(int galleryId)
+        {
+            var gallery = await _context.Galleries
+                .Include(g => g.Albums)
+                    .ThenInclude(a => a.Photos)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(g => g.Id == galleryId);
+
+            if (gallery == null)
+                return new List<Photo>();
+
+            return gallery.Albums
+                .SelectMany(a => a.Photos)
+                .OrderBy(p => p.DisplayOrder)
+                .ToList();
+        }
+
+        public async Task<bool> CanClientDownloadAsync(int galleryId, int clientProfileId)
+        {
+            var access = await _context.GalleryAccesses
+                .FirstOrDefaultAsync(ga => ga.GalleryId == galleryId && ga.ClientProfileId == clientProfileId);
+
+            return access?.CanDownload ?? false;
         }
     }
 }

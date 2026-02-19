@@ -9,11 +9,13 @@ namespace MyPhotoBiz.Services
    {
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _env;
+    private readonly IActivityService _activityService;
 
-    public FileService(ApplicationDbContext context, IWebHostEnvironment env)
+    public FileService(ApplicationDbContext context, IWebHostEnvironment env, IActivityService activityService)
     {
         _context = context;
         _env = env;
+        _activityService = activityService;
     }
 
         public async Task<IEnumerable<FileItem>> GetFilesAsync(string filterType, int page, int pageSize)
@@ -65,11 +67,20 @@ namespace MyPhotoBiz.Services
             var fileItem = await _context.Files.FindAsync(id);
             if (fileItem != null)
             {
+                var fileName = fileItem.Name;
                 if (System.IO.File.Exists(fileItem.FilePath))
                     System.IO.File.Delete(fileItem.FilePath);
 
                 _context.Files.Remove(fileItem);
                 await _context.SaveChangesAsync();
+
+                // Audit log
+                await _activityService.LogActivityAsync(
+                    "Deleted",
+                    "File",
+                    id,
+                    fileName,
+                    $"File '{fileName}' was deleted");
             }
         }
     }

@@ -18,10 +18,12 @@ namespace MyPhotoBiz.Services
     public class InvoiceService : IInvoiceService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IActivityService _activityService;
 
-        public InvoiceService(ApplicationDbContext context)
+        public InvoiceService(ApplicationDbContext context, IActivityService activityService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _activityService = activityService ?? throw new ArgumentNullException(nameof(activityService));
         }
 
         #region Get Methods
@@ -285,8 +287,18 @@ namespace MyPhotoBiz.Services
                 .FirstOrDefaultAsync(i => i.Id == id);
             if (invoice == null) return false;
 
+            var invoiceNumber = invoice.InvoiceNumber;
             _context.Invoices.Remove(invoice);
             await _context.SaveChangesAsync();
+
+            // Audit log
+            await _activityService.LogActivityAsync(
+                "Deleted",
+                "Invoice",
+                id,
+                invoiceNumber,
+                $"Invoice '{invoiceNumber}' was deleted");
+
             return true;
         }
 

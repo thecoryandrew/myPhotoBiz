@@ -48,37 +48,7 @@ namespace MyPhotoBiz.Controllers
                 return View("NoAccess");
             }
 
-            // Get galleries the client has access to
-            var accessibleGalleries = await _context.GalleryAccesses
-                .Include(ga => ga.Gallery)
-                    .ThenInclude(g => g.Albums)
-                        .ThenInclude(a => a.Photos)
-                .Where(ga => ga.ClientProfileId == clientProfile.Id &&
-                            ga.IsActive &&
-                            (!ga.ExpiryDate.HasValue || ga.ExpiryDate > DateTime.UtcNow) &&
-                            ga.Gallery.IsActive &&
-                            ga.Gallery.ExpiryDate > DateTime.UtcNow)
-                .Select(ga => new
-                {
-                    Gallery = ga.Gallery,
-                    Access = ga
-                })
-                .ToListAsync();
-
-            var viewModel = accessibleGalleries.Select(item => new MyPhotoBiz.ViewModels.ClientGalleryViewModel
-            {
-                GalleryId = item.Gallery.Id,
-                Name = item.Gallery.Name,
-                Description = item.Gallery.Description,
-                BrandColor = item.Gallery.BrandColor,
-                PhotoCount = item.Gallery.Albums.SelectMany(a => a.Photos).Count(),
-                ExpiryDate = item.Gallery.ExpiryDate,
-                GrantedDate = item.Access.GrantedDate,
-                CanDownload = item.Access.CanDownload,
-                CanProof = item.Access.CanProof,
-                CanOrder = item.Access.CanOrder
-            }).ToList();
-
+            var viewModel = await _galleryService.GetClientAccessibleGalleriesAsync(clientProfile.Id);
             return View(viewModel);
         }
 
@@ -102,51 +72,18 @@ namespace MyPhotoBiz.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var gallery = await _context.Galleries
-                    .Include(g => g.Albums)
-                        .ThenInclude(a => a.Photos)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.Id == id);
-
+                var gallery = await _galleryService.GetGalleryByIdAsync(id);
                 if (gallery == null || !gallery.IsActive || gallery.ExpiryDate < DateTime.UtcNow)
                 {
                     return RedirectToAction("Index");
                 }
 
-                // Create or update session for tracking
-                var clientProfile = await _context.ClientProfiles
-                    .FirstOrDefaultAsync(cp => cp.UserId == userId);
-
-                if (clientProfile != null)
-                {
-                    var session = await _context.GallerySessions
-                        .FirstOrDefaultAsync(s => s.GalleryId == id && s.UserId == userId);
-
-                    if (session == null)
-                    {
-                        session = new GallerySession
-                        {
-                            GalleryId = id,
-                            UserId = userId,
-                            SessionToken = Guid.NewGuid().ToString(),
-                            CreatedDate = DateTime.UtcNow,
-                            LastAccessDate = DateTime.UtcNow
-                        };
-                        _context.GallerySessions.Add(session);
-                    }
-                    else
-                    {
-                        session.LastAccessDate = DateTime.UtcNow;
-                    }
-                    await _context.SaveChangesAsync();
-
-                    ViewBag.SessionToken = session.SessionToken;
-                }
+                // Create or update session for tracking (with expiry)
+                var session = await _galleryService.GetOrCreateSessionAsync(id, userId);
+                ViewBag.SessionToken = session?.SessionToken;
 
                 // Get photos from all albums in this gallery
-                var photos = gallery.Albums.SelectMany(a => a.Photos)
-                    .OrderBy(p => p.DisplayOrder)
-                    .ToList();
+                var photos = await _galleryService.GetGalleryPhotosAsync(id);
 
                 ViewBag.GalleryName = gallery.Name;
                 ViewBag.BrandColor = gallery.BrandColor ?? "#2c3e50";
@@ -182,16 +119,14 @@ namespace MyPhotoBiz.Controllers
                     return Unauthorized();
                 }
 
-                // Get gallery access to check download permission
+                // Get client profile to check download permission
                 var clientProfile = await _context.ClientProfiles
                     .FirstOrDefaultAsync(cp => cp.UserId == userId);
 
                 if (clientProfile != null)
                 {
-                    var access = await _context.GalleryAccesses
-                        .FirstOrDefaultAsync(ga => ga.GalleryId == galleryId && ga.ClientProfileId == clientProfile.Id);
-
-                    if (access != null && !access.CanDownload)
+                    var canDownload = await _galleryService.CanClientDownloadAsync(galleryId, clientProfile.Id);
+                    if (!canDownload)
                     {
                         _logger.LogWarning("Download not permitted for user {UserId} on gallery {GalleryId}", userId, galleryId);
                         return Forbid();
@@ -271,10 +206,7 @@ namespace MyPhotoBiz.Controllers
                 if (!hasAccess)
                     return Unauthorized(new { success = false, message = "No access to gallery" });
 
-                var gallery = await _context.Galleries
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.Id == galleryId);
-
+                var gallery = await _galleryService.GetGalleryByIdAsync(galleryId);
                 if (gallery == null || !gallery.IsActive || gallery.ExpiryDate < DateTime.UtcNow)
                     return Unauthorized(new { success = false, message = "Gallery expired" });
 
@@ -293,7 +225,8 @@ namespace MyPhotoBiz.Controllers
                         gallery.LogoPath,
                         gallery.ExpiryDate,
                         CreatedDate = session?.CreatedDate,
-                        LastAccessDate = session?.LastAccessDate
+                        LastAccessDate = session?.LastAccessDate,
+                        SessionExpiresAt = session?.ExpiresAt
                     }
                 });
             }
