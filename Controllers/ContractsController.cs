@@ -4,30 +4,22 @@ using Microsoft.EntityFrameworkCore;
 using MyPhotoBiz.Data;
 using MyPhotoBiz.Enums;
 using MyPhotoBiz.Models;
+using MyPhotoBiz.Services;
 using MyPhotoBiz.ViewModels;
 
 namespace MyPhotoBiz.Controllers
 {
-    // TODO: [HIGH] Extract to ContractService - business logic shouldn't be in controller
-    // TODO: [HIGH] PendingSignature status never used - add "Send for Signature" workflow
-    // TODO: [HIGH] Expired status never used - add expiry date field and auto-expiration
-    // TODO: [HIGH] Add Contract → Invoice workflow (auto-generate invoice on signing)
-    // TODO: [MEDIUM] Add contract status transition validation (state machine)
-    // TODO: [MEDIUM] Signature validation is weak - any base64 string accepted
-    // TODO: [MEDIUM] Add contract versioning for amendments
-    // TODO: [FEATURE] Add contract templates system
-    // TODO: [FEATURE] Add e-signature integration (DocuSign, HelloSign)
-    // TODO: [FEATURE] Add multi-signature support (client + photographer)
-    // TODO: [FEATURE] Send email notification when contract is sent for signature
-    // [Authorize]
+    [Authorize(Roles = "Admin")]
     public class ContractsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IBadgeService _badgeService;
         private readonly ILogger<ContractsController> _logger;
 
-        public ContractsController(ApplicationDbContext context, ILogger<ContractsController> logger)
+        public ContractsController(ApplicationDbContext context, IBadgeService badgeService, ILogger<ContractsController> logger)
         {
             _context = context;
+            _badgeService = badgeService;
             _logger = logger;
         }
 
@@ -260,7 +252,8 @@ namespace MyPhotoBiz.Controllers
                 // Award badge if configured
                 if (contract.AwardBadgeOnSign && contract.BadgeToAwardId.HasValue && contract.ClientProfileId.HasValue)
                 {
-                    await AwardBadgeToClientAsync(contract.ClientProfileId.Value, contract.BadgeToAwardId.Value, contract.Id);
+                    await _badgeService.AwardBadgeAsync(contract.ClientProfileId.Value, contract.BadgeToAwardId.Value,
+                        contract.Id, "Awarded by contract signature");
                     TempData["Success"] = $"Contract signed successfully! Badge '{contract.BadgeToAward?.Name}' awarded!";
                 }
                 else
@@ -399,30 +392,6 @@ namespace MyPhotoBiz.Controllers
             }
 
             return $"/uploads/contracts/{fileName}";
-        }
-
-        private async Task AwardBadgeToClientAsync(int clientProfileId, int badgeId, int? contractId = null)
-        {
-            // Check if client already has this badge
-            var existingBadge = await _context.ClientBadges
-                .FirstOrDefaultAsync(cb => cb.ClientProfileId == clientProfileId && cb.BadgeId == badgeId);
-
-            if (existingBadge == null)
-            {
-                var clientBadge = new ClientBadge
-                {
-                    ClientProfileId = clientProfileId,
-                    BadgeId = badgeId,
-                    ContractId = contractId,
-                    EarnedDate = DateTime.UtcNow,
-                    Notes = contractId.HasValue ? "Awarded by contract signature" : null
-                };
-
-                _context.ClientBadges.Add(clientBadge);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"Badge {badgeId} awarded to client profile {clientProfileId}");
-            }
         }
     }
 }

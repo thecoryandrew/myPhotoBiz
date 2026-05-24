@@ -107,8 +107,6 @@ namespace MyPhotoBiz.Controllers
 
                 var gallery = await _galleryService.CreateGalleryAsync(model);
 
-                _logger.LogInformation($"Gallery created: {gallery.Name} (ID: {gallery.Id})");
-
                 return Json(new
                 {
                     success = true,
@@ -186,8 +184,6 @@ namespace MyPhotoBiz.Controllers
 
                 var gallery = await _galleryService.UpdateGalleryAsync(model);
 
-                _logger.LogInformation($"Gallery updated: {gallery.Name} (ID: {gallery.Id})");
-
                 return Json(new
                 {
                     success = true,
@@ -222,8 +218,6 @@ namespace MyPhotoBiz.Controllers
                         message = "Gallery not found."
                     });
                 }
-
-                _logger.LogInformation($"Gallery deleted: ID {id}");
 
                 return Json(new
                 {

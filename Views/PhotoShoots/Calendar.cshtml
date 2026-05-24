@@ -17,6 +17,7 @@
 }
 
 <div class="container-fluid">
+    @Html.AntiForgeryToken()
     <partial name="Partials/_PageTitle" />
 
     <div class="outlook-box">
@@ -268,7 +269,10 @@
 
                 fetch(id ? "/PhotoShoots/UpdateAjax" : "/PhotoShoots/CreateAjax", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": antiForgeryToken()
+                    },
                     body: JSON.stringify(dto)
                 }).then(() => {
                     bootstrap.Modal.getInstance(document.getElementById("event-modal")).hide();
@@ -287,7 +291,10 @@
                 var id = document.getElementById("psId").value;
                 if (!id) return;
 
-                fetch("/PhotoShoots/DeleteAjax?id=" + id, { method: "POST" })
+                fetch("/PhotoShoots/DeleteAjax?id=" + id, {
+                    method: "POST",
+                    headers: { "RequestVerificationToken": antiForgeryToken() }
+                })
                     .then(() => {
                         bootstrap.Modal.getInstance(document.getElementById("event-modal")).hide();
                         calendar.refetchEvents();
@@ -306,11 +313,19 @@
 
                 fetch("/PhotoShoots/Move", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": antiForgeryToken()
+                    },
                     body: JSON.stringify(payload)
                 }).then(() => {
                     calendar.refetchEvents();
                 });
+            }
+
+            function antiForgeryToken() {
+                var el = document.querySelector('input[name="__RequestVerificationToken"]');
+                return el ? el.value : "";
             }
         });
     </script>

@@ -8,16 +8,6 @@ using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Data
 {
-    // TODO: [HIGH-DATA] ClientProfile CASCADE delete is too aggressive - deletes all related data
-    // TODO: [HIGH-DATA] Invoice SetNull on client delete orphans invoice records
-    // TODO: [HIGH-DATA] Contract SetNull on photoshoot delete orphans contract records
-    // TODO: [HIGH] Add soft delete support (IsDeleted flag) for Client, Invoice, Contract entities
-    // TODO: [HIGH] PhotoShoot has dual photographer FKs (PhotographerId string + PhotographerProfileId int) - consolidate
-    // TODO: [MEDIUM] Add missing indexes: GalleryAccess.ExpiryDate, Photo.ClientProfileId
-    // TODO: [MEDIUM] Add unique constraint on ClientProfile email
-    // TODO: [MEDIUM] Add CreatedBy/UpdatedBy audit fields to key entities
-    // TODO: [FEATURE] Add Payment model for tracking payment history
-    // TODO: [FEATURE] Add EmailTemplate model for customizable notifications
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

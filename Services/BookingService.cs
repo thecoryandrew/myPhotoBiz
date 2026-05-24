@@ -5,17 +5,6 @@ using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Services
 {
-    // TODO: [CRITICAL] ConvertToPhotoShootAsync allows conversion without photographer assigned
-    // TODO: [HIGH] Add past date validation in CreateBookingRequestAsync
-    // TODO: [HIGH] ConfirmBookingAsync should require photographer assignment
-    // TODO: [HIGH] Auto-generate draft Invoice when converting to PhotoShoot
-    // TODO: [HIGH] Auto-generate draft Contract when converting to PhotoShoot
-    // TODO: [MEDIUM] Status "Completed" is confusing - consider "Converted" for clarity
-    // TODO: [MEDIUM] AlternativeDate field is never used in workflow
-    // TODO: [MEDIUM] Availability slots not linked to PhotoShoot after conversion
-    // TODO: [MEDIUM] Wrap conversion in database transaction for data integrity
-    // TODO: [FEATURE] Add email notification on booking status changes
-    // TODO: [FEATURE] Add calendar integration for photographer schedules
     public class BookingService : IBookingService
     {
         private readonly ApplicationDbContext _context;
@@ -23,8 +12,8 @@ namespace MyPhotoBiz.Services
 
         public BookingService(ApplicationDbContext context, IActivityService activityService)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _activityService = activityService ?? throw new ArgumentNullException(nameof(activityService));
+            _context = context;
+            _activityService = activityService;
         }
 
         #region Booking Requests

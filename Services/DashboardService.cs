@@ -6,26 +6,13 @@ using MyPhotoBiz.ViewModels;
 
 namespace MyPhotoBiz.Services
 {
-    // TODO: [HIGH] Dashboard is missing key metrics:
-    //       - Pending bookings requiring action
-    //       - Contracts awaiting signature
-    //       - Overdue invoices with aging breakdown
-    //       - Today's schedule at-a-glance
-    //       - Galleries expiring soon
-    // TODO: [MEDIUM] Add caching for dashboard stats (Redis or in-memory)
-    // TODO: [MEDIUM] MonthlyRevenue calculation should filter by current month, not total
-    // TODO: [MEDIUM] YearlyRevenue is same as MonthlyRevenue - implement actual yearly calc
-    // TODO: [FEATURE] Add revenue forecast/trend analysis
-    // TODO: [FEATURE] Add client acquisition metrics
-    // TODO: [FEATURE] Add photographer utilization stats
-    // TODO: [FEATURE] Add recent activity timeline
     public class DashboardService : IDashboardService
     {
         private readonly ApplicationDbContext _context;
 
         public DashboardService(ApplicationDbContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
         }
 
         public async Task<int> GetClientsCountAsync() =>
@@ -124,7 +111,6 @@ namespace MyPhotoBiz.Services
                 ["InProgress"] = await _context.PhotoShoots.CountAsync(p => p.Status == PhotoShootStatus.InProgress)
             };
 
-            // Convert PhotoShoots to PhotoShootViewModel
             var recentPhotoshoots = upcomingPhotoShoots.Select(ps => new PhotoShootViewModel
             {
                 Id = ps.Id,
@@ -137,8 +123,7 @@ namespace MyPhotoBiz.Services
                 Price = ps.Price,
                 Notes = ps.Notes,
                 DurationHours = ps.DurationHours,
-                DurationMinutes = ps.DurationMinutes
-                ,
+                DurationMinutes = ps.DurationMinutes,
                 ClientProfile = ps.ClientProfile
             }).ToList();
 
@@ -148,7 +133,7 @@ namespace MyPhotoBiz.Services
                 UpcomingPhotoshoots = pendingPhotoShoots,
                 CompletedPhotoshoots = completedPhotoShoots,
                 MonthlyRevenue = totalRevenue,
-                YearlyRevenue = totalRevenue, // You may want to calculate actual yearly revenue
+                YearlyRevenue = totalRevenue,
                 PendingInvoiceAmount = outstandingInvoices,
                 RecentPhotoshoots = recentPhotoshoots,
                 RecentInvoices = recentInvoices.ToList(),

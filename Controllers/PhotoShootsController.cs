@@ -10,16 +10,6 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Controllers
 {
-    // TODO: [HIGH] Calendar Move action doesn't update EndTime field
-    // TODO: [HIGH] CreateAjax/UpdateAjax lack server-side validation
-    // TODO: [HIGH] Uses PhotographerId (string) but should use PhotographerProfileId (int)
-    // TODO: [MEDIUM] Add past date validation when creating/updating shoots
-    // TODO: [MEDIUM] Calendar GetEvents doesn't include PhotographerProfile for display
-    // TODO: [MEDIUM] Add conflict detection for overlapping shoots
-    // TODO: [FEATURE] Add drag-to-create in calendar view
-    // TODO: [FEATURE] Add color coding by shoot type/status
-    // TODO: [FEATURE] Add travel time calculation between shoots
-    // TODO: [FEATURE] Add recurring shoot support
     [Authorize(Roles = "Admin,Photographer")]
     public class PhotoShootsController : Controller
     {
@@ -290,6 +280,7 @@ namespace MyPhotoBiz.Controllers
 
         // ---- Drag/Drop Update -------------------------------
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Photographer")]
         public async Task<IActionResult> Move(int id, DateTime start, DateTime end)
         {
@@ -307,6 +298,7 @@ namespace MyPhotoBiz.Controllers
 
         // ---- AJAX: Create -----------------------------------
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Photographer")]
         public async Task<IActionResult> CreateAjax([FromBody] PhotoShootAjaxDto dto)
         {
@@ -332,6 +324,7 @@ namespace MyPhotoBiz.Controllers
 
         // ---- AJAX: Update -----------------------------------
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Photographer")]
         public async Task<IActionResult> UpdateAjax([FromBody] PhotoShootAjaxDto dto)
         {
@@ -357,6 +350,7 @@ namespace MyPhotoBiz.Controllers
 
         // ---- AJAX: Delete -----------------------------------
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Photographer")]
         public async Task<IActionResult> DeleteAjax(int id)
         {

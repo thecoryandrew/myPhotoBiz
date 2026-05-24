@@ -11,6 +11,7 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class InvoicesController : Controller
     {
         private readonly IInvoiceService _invoiceService;
@@ -84,7 +85,6 @@ namespace MyPhotoBiz.Controllers
             return View(vm);
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create()
         {
             await PopulateClientsAndPhotoShootsAsync();
@@ -112,7 +112,6 @@ namespace MyPhotoBiz.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(CreateInvoiceViewModel vm, string action)
         {
             if (!ModelState.IsValid)
@@ -167,7 +166,6 @@ namespace MyPhotoBiz.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
             var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
@@ -202,7 +200,6 @@ namespace MyPhotoBiz.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, CreateInvoiceViewModel vm, string action)
         {
             if (!ModelState.IsValid)
@@ -238,7 +235,6 @@ namespace MyPhotoBiz.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
@@ -262,7 +258,6 @@ namespace MyPhotoBiz.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
@@ -294,7 +289,6 @@ namespace MyPhotoBiz.Controllers
             return $"INV-{timestamp}-{random}";
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Preview(string id, [FromQuery] decimal? amount = null, [FromQuery] decimal? tax = null)
         {
             Invoice? invoice = await _invoiceService.GetInvoiceByNumberAsync(id);
@@ -326,7 +320,6 @@ namespace MyPhotoBiz.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Download(string id)
         {
             var invoice = await _invoiceService.GetInvoiceByNumberAsync(id);
@@ -344,7 +337,6 @@ namespace MyPhotoBiz.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsPaid(int id)

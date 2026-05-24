@@ -6,13 +6,7 @@ using MyPhotoBiz.Services;
 
 namespace MyPhotoBiz.Controllers
 {
-    // TODO: [CRITICAL-SECURITY] Uncomment [Authorize] - photos are currently publicly accessible!
-    // TODO: [SECURITY] Add anonymous user validation in View/Thumbnail actions - currently only checks Client role
-    // TODO: [SECURITY] Add rate limiting to prevent photo enumeration attacks
-    // TODO: [FEATURE] Add watermarking support for client-facing photos
-    // TODO: [FEATURE] Add batch download (ZIP) functionality
-    // TODO: [FEATURE] Add photo reordering UI (DisplayOrder property exists but no endpoint)
-    // [Authorize]
+    [Authorize]
     public class PhotosController : Controller
     {
         private readonly IPhotoService _photoService;

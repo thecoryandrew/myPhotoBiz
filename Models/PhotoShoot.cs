@@ -4,14 +4,6 @@ using MyPhotoBiz.Enums;
 
 namespace MyPhotoBiz.Models
 {
-    // TODO: [HIGH] Dual photographer FKs cause data sync issues:
-    //       - PhotographerId (string) references ApplicationUser.Id
-    //       - PhotographerProfileId (int) references PhotographerProfile.Id
-    //       Consolidate to single PhotographerProfileId
-    // TODO: [MEDIUM] Add soft delete (IsDeleted flag) to preserve history
-    // TODO: [MEDIUM] Add CreatedBy/UpdatedBy audit fields
-    // TODO: [FEATURE] Add recurring shoot support (RecurrencePattern)
-    // TODO: [FEATURE] Add shoot type categorization (Wedding, Portrait, Event, etc.)
     public class PhotoShoot
     {
         public int Id { get; set; }

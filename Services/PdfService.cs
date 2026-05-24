@@ -11,21 +11,13 @@ public class PdfService : IPdfService
 
     public PdfService(ILogger<PdfService> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     public async Task<byte[]> GenerateInvoicePdfAsync(Invoice invoice)
     {
-        try
-        {
-            var html = await GenerateInvoiceHtmlAsync(invoice);
-            return await GenerateInvoicePdfFromHtmlAsync(html);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating PDF for invoice {InvoiceId}", invoice.Id);
-            throw;
-        }
+        var html = await GenerateInvoiceHtmlAsync(invoice);
+        return await GenerateInvoicePdfFromHtmlAsync(html);
     }
 
     private static string? FindChromePath()
@@ -47,203 +39,175 @@ public class PdfService : IPdfService
 
     private async Task<byte[]> GenerateInvoicePdfFromHtmlAsync(string html)
     {
-        try
+        await using var browser = await GetBrowserAsync();
+        await using var page = await browser.NewPageAsync();
+
+        await page.SetContentAsync(html, new NavigationOptions
         {
-            var browserWSEndpoint = Environment.GetEnvironmentVariable("CHROME_WS_ENDPOINT");
-            IBrowser? browser = null;
+            WaitUntil = new[] { WaitUntilNavigation.Networkidle0 }
+        });
 
-            if (!string.IsNullOrEmpty(browserWSEndpoint))
+        return await page.PdfDataAsync(new PdfOptions
+        {
+            Format = PaperFormat.A4,
+            DisplayHeaderFooter = false,
+            MarginOptions = new MarginOptions
             {
-                // Try to connect to existing Chrome instance
-                try
-                {
-                    browser = await Puppeteer.ConnectAsync(new ConnectOptions { BrowserWSEndpoint = browserWSEndpoint });
-                    _logger.LogInformation("Connected to existing Chrome instance at {endpoint}", browserWSEndpoint);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to connect to Chrome at {endpoint}", browserWSEndpoint);
-                }
+                Top = "20px",
+                Bottom = "20px",
+                Left = "20px",
+                Right = "20px"
             }
+        });
+    }
 
-            if (browser == null)
+    private async Task<IBrowser> GetBrowserAsync()
+    {
+        var browserWSEndpoint = Environment.GetEnvironmentVariable("CHROME_WS_ENDPOINT");
+        if (!string.IsNullOrEmpty(browserWSEndpoint))
+        {
+            try
             {
-                // Try to find local Chrome installation
-                var executablePath = FindChromePath();
-                if (!string.IsNullOrEmpty(executablePath))
-                {
-                    try
-                    {
-                        browser = await Puppeteer.LaunchAsync(new LaunchOptions
-                        {
-                            Headless = true,
-                            ExecutablePath = executablePath,
-                            Args = new[] { "--no-sandbox", "--disable-setuid-sandbox" }
-                        });
-                        _logger.LogInformation("Launched local Chrome from {path}", executablePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to launch Chrome from {path}", executablePath);
-                    }
-                }
+                return await Puppeteer.ConnectAsync(new ConnectOptions { BrowserWSEndpoint = browserWSEndpoint });
             }
-
-            // If all else fails, try to download Chrome
-            if (browser == null)
+            catch (Exception ex)
             {
-                _logger.LogInformation("Attempting to download Chrome...");
-                await new BrowserFetcher().DownloadAsync();
-                browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                _logger.LogWarning(ex, "Failed to connect to Chrome at {endpoint}", browserWSEndpoint);
+            }
+        }
+
+        var executablePath = FindChromePath();
+        if (!string.IsNullOrEmpty(executablePath))
+        {
+            try
+            {
+                return await Puppeteer.LaunchAsync(new LaunchOptions
                 {
                     Headless = true,
+                    ExecutablePath = executablePath,
                     Args = new[] { "--no-sandbox", "--disable-setuid-sandbox" }
                 });
             }
-
-            await using var page = await browser.NewPageAsync();
-
-            await page.SetContentAsync(html, new NavigationOptions
+            catch (Exception ex)
             {
-                WaitUntil = new[] { WaitUntilNavigation.Networkidle0 }
-            });
-
-            var pdfBytes = await page.PdfDataAsync(new PdfOptions
-            {
-                Format = PaperFormat.A4,
-                DisplayHeaderFooter = false,
-                MarginOptions = new MarginOptions
-                {
-                    Top = "20px",
-                    Bottom = "20px",
-                    Left = "20px",
-                    Right = "20px"
-                }
-            });
-
-            return pdfBytes;
+                _logger.LogWarning(ex, "Failed to launch Chrome from {path}", executablePath);
+            }
         }
-        catch (Exception ex)
+
+        await new BrowserFetcher().DownloadAsync();
+        return await Puppeteer.LaunchAsync(new LaunchOptions
         {
-            _logger.LogError(ex, "Error generating PDF from HTML");
-            throw;
-        }
+            Headless = true,
+            Args = new[] { "--no-sandbox", "--disable-setuid-sandbox" }
+        });
     }
 
-    public async Task<string> GenerateInvoiceHtmlAsync(Invoice invoice)
+    public Task<string> GenerateInvoiceHtmlAsync(Invoice invoice)
     {
-        try
+        var html = new StringBuilder();
+
+        html.AppendLine("<!DOCTYPE html>");
+        html.AppendLine("<html>");
+        html.AppendLine("<head>");
+        html.AppendLine("<meta charset='utf-8'>");
+        html.AppendLine("<title>Invoice</title>");
+        html.AppendLine(GetInvoiceStyles());
+        html.AppendLine("</head>");
+        html.AppendLine("<body>");
+        html.AppendLine("<div class='invoice'>");
+
+        // Header with invoice number
+        html.AppendLine("<div class='header'>");
+        html.AppendLine("<h1>INVOICE</h1>");
+        html.AppendLine("<p><strong>Invoice #:</strong> " + (invoice.InvoiceNumber ?? "N/A") + "</p>");
+        html.AppendLine("</div>");
+
+        // Invoice details
+        html.AppendLine("<div class='invoice-details'>");
+        html.AppendLine("<div class='row'>");
+        html.AppendLine("<div class='col'>");
+        html.AppendLine("<h3>Bill To</h3>");
+        if (invoice.ClientProfile?.User != null)
         {
-            var html = new StringBuilder();
-
-            html.AppendLine("<!DOCTYPE html>");
-            html.AppendLine("<html>");
-            html.AppendLine("<head>");
-            html.AppendLine("<meta charset='utf-8'>");
-            html.AppendLine("<title>Invoice</title>");
-            html.AppendLine(GetInvoiceStyles());
-            html.AppendLine("</head>");
-            html.AppendLine("<body>");
-            html.AppendLine("<div class='invoice'>");
-
-            // Header with invoice number
-            html.AppendLine("<div class='header'>");
-            html.AppendLine("<h1>INVOICE</h1>");
-            html.AppendLine("<p><strong>Invoice #:</strong> " + (invoice.InvoiceNumber ?? "N/A") + "</p>");
-            html.AppendLine("</div>");
-
-            // Invoice details
-            html.AppendLine("<div class='invoice-details'>");
-            html.AppendLine("<div class='row'>");
-            html.AppendLine("<div class='col'>");
-            html.AppendLine("<h3>Bill To</h3>");
-            if (invoice.ClientProfile?.User != null)
-            {
-                html.AppendLine("<p><strong>" + invoice.ClientProfile.User.FirstName + " " + invoice.ClientProfile.User.LastName + "</strong></p>");
-                if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.User.Email))
-                    html.AppendLine("<p>" + invoice.ClientProfile.User.Email + "</p>");
-                if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.PhoneNumber))
-                    html.AppendLine("<p>" + invoice.ClientProfile.PhoneNumber + "</p>");
-                if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.Address))
-                    html.AppendLine("<p>" + invoice.ClientProfile.Address + "</p>");
-            }
-            html.AppendLine("</div>");
-            html.AppendLine("<div class='col text-right'>");
-            html.AppendLine("<p><strong>Invoice Date:</strong> " + invoice.InvoiceDate.ToString("MMMM dd, yyyy") + "</p>");
-            html.AppendLine("<p><strong>Due Date:</strong> " + invoice.DueDate.ToString("MMMM dd, yyyy") + "</p>");
-            html.AppendLine("</div>");
-            html.AppendLine("</div>");
-            html.AppendLine("</div>");
-
-            // Items table
-            html.AppendLine("<table class='items'>");
-            html.AppendLine("<thead>");
-            html.AppendLine("<tr>");
-            html.AppendLine("<th>Description</th>");
-            html.AppendLine("<th>Quantity</th>");
-            html.AppendLine("<th>Unit Price</th>");
-            html.AppendLine("<th>Total</th>");
-            html.AppendLine("</tr>");
-            html.AppendLine("</thead>");
-            html.AppendLine("<tbody>");
-
-            if (invoice.InvoiceItems != null && invoice.InvoiceItems.Any())
-            {
-                foreach (var item in invoice.InvoiceItems)
-                {
-                    html.AppendLine("<tr>");
-                    html.AppendLine("<td>" + (item.Description ?? "") + "</td>");
-                    html.AppendLine("<td style='text-align: center;'>" + item.Quantity + "</td>");
-                    html.AppendLine("<td style='text-align: right;'>$" + item.UnitPrice.ToString("0.00") + "</td>");
-                    html.AppendLine("<td style='text-align: right;'>$" + (item.Quantity * item.UnitPrice).ToString("0.00") + "</td>");
-                    html.AppendLine("</tr>");
-                }
-            }
-
-            html.AppendLine("</tbody>");
-            html.AppendLine("</table>");
-
-            // Totals
-            html.AppendLine("<div class='totals'>");
-            html.AppendLine("<div class='total-row'>");
-            html.AppendLine("<span><strong>Subtotal:</strong></span>");
-            html.AppendLine("<span>$" + invoice.Amount.ToString("0.00") + "</span>");
-            html.AppendLine("</div>");
-            html.AppendLine("<div class='total-row'>");
-            html.AppendLine("<span><strong>Tax:</strong></span>");
-            html.AppendLine("<span>$" + invoice.Tax.ToString("0.00") + "</span>");
-            html.AppendLine("</div>");
-            html.AppendLine("<div class='total-row grand-total'>");
-            html.AppendLine("<span><strong>TOTAL DUE:</strong></span>");
-            html.AppendLine("<span>$" + (invoice.Amount + invoice.Tax).ToString("0.00") + "</span>");
-            html.AppendLine("</div>");
-            html.AppendLine("</div>");
-
-            // Notes
-            if (!string.IsNullOrWhiteSpace(invoice.Notes))
-            {
-                html.AppendLine("<div class='notes'>");
-                html.AppendLine("<h3>Notes</h3>");
-                html.AppendLine("<p>" + invoice.Notes + "</p>");
-                html.AppendLine("</div>");
-            }
-
-            // Status
-            html.AppendLine("<div class='status'>");
-            html.AppendLine("<p><strong>Status:</strong> " + invoice.Status + "</p>");
-            html.AppendLine("</div>");
-
-            html.AppendLine("</div>");
-            html.AppendLine("</body>");
-            html.AppendLine("</html>");
-
-            return await Task.FromResult(html.ToString());
+            html.AppendLine("<p><strong>" + invoice.ClientProfile.User.FirstName + " " + invoice.ClientProfile.User.LastName + "</strong></p>");
+            if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.User.Email))
+                html.AppendLine("<p>" + invoice.ClientProfile.User.Email + "</p>");
+            if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.PhoneNumber))
+                html.AppendLine("<p>" + invoice.ClientProfile.PhoneNumber + "</p>");
+            if (!string.IsNullOrWhiteSpace(invoice.ClientProfile.Address))
+                html.AppendLine("<p>" + invoice.ClientProfile.Address + "</p>");
         }
-        catch (Exception ex)
+        html.AppendLine("</div>");
+        html.AppendLine("<div class='col text-right'>");
+        html.AppendLine("<p><strong>Invoice Date:</strong> " + invoice.InvoiceDate.ToString("MMMM dd, yyyy") + "</p>");
+        html.AppendLine("<p><strong>Due Date:</strong> " + invoice.DueDate.ToString("MMMM dd, yyyy") + "</p>");
+        html.AppendLine("</div>");
+        html.AppendLine("</div>");
+        html.AppendLine("</div>");
+
+        // Items table
+        html.AppendLine("<table class='items'>");
+        html.AppendLine("<thead>");
+        html.AppendLine("<tr>");
+        html.AppendLine("<th>Description</th>");
+        html.AppendLine("<th>Quantity</th>");
+        html.AppendLine("<th>Unit Price</th>");
+        html.AppendLine("<th>Total</th>");
+        html.AppendLine("</tr>");
+        html.AppendLine("</thead>");
+        html.AppendLine("<tbody>");
+
+        if (invoice.InvoiceItems != null && invoice.InvoiceItems.Any())
         {
-            _logger.LogError(ex, "Error generating HTML for invoice {InvoiceId}", invoice.Id);
-            throw;
+            foreach (var item in invoice.InvoiceItems)
+            {
+                html.AppendLine("<tr>");
+                html.AppendLine("<td>" + (item.Description ?? "") + "</td>");
+                html.AppendLine("<td style='text-align: center;'>" + item.Quantity + "</td>");
+                html.AppendLine("<td style='text-align: right;'>$" + item.UnitPrice.ToString("0.00") + "</td>");
+                html.AppendLine("<td style='text-align: right;'>$" + (item.Quantity * item.UnitPrice).ToString("0.00") + "</td>");
+                html.AppendLine("</tr>");
+            }
         }
+
+        html.AppendLine("</tbody>");
+        html.AppendLine("</table>");
+
+        // Totals
+        html.AppendLine("<div class='totals'>");
+        html.AppendLine("<div class='total-row'>");
+        html.AppendLine("<span><strong>Subtotal:</strong></span>");
+        html.AppendLine("<span>$" + invoice.Amount.ToString("0.00") + "</span>");
+        html.AppendLine("</div>");
+        html.AppendLine("<div class='total-row'>");
+        html.AppendLine("<span><strong>Tax:</strong></span>");
+        html.AppendLine("<span>$" + invoice.Tax.ToString("0.00") + "</span>");
+        html.AppendLine("</div>");
+        html.AppendLine("<div class='total-row grand-total'>");
+        html.AppendLine("<span><strong>TOTAL DUE:</strong></span>");
+        html.AppendLine("<span>$" + (invoice.Amount + invoice.Tax).ToString("0.00") + "</span>");
+        html.AppendLine("</div>");
+        html.AppendLine("</div>");
+
+        // Notes
+        if (!string.IsNullOrWhiteSpace(invoice.Notes))
+        {
+            html.AppendLine("<div class='notes'>");
+            html.AppendLine("<h3>Notes</h3>");
+            html.AppendLine("<p>" + invoice.Notes + "</p>");
+            html.AppendLine("</div>");
+        }
+
+        // Status
+        html.AppendLine("<div class='status'>");
+        html.AppendLine("<p><strong>Status:</strong> " + invoice.Status + "</p>");
+        html.AppendLine("</div>");
+
+        html.AppendLine("</div>");
+        html.AppendLine("</body>");
+        html.AppendLine("</html>");
+
+        return Task.FromResult(html.ToString());
     }
 
     private static string GetInvoiceStyles()
