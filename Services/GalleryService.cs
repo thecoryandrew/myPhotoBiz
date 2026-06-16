@@ -77,6 +77,7 @@ namespace MyPhotoBiz.Services
                         .ThenInclude(a => a.Photos)
                     .Include(g => g.Sessions)
                         .ThenInclude(s => s.Proofs)
+                    .AsSplitQuery()
                     .AsNoTracking()
                     .FirstOrDefaultAsync(g => g.Id == id);
 

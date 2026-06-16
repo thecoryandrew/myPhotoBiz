@@ -27,6 +27,8 @@ namespace MyPhotoBiz.Models
         public bool AwardBadgeOnSign { get; set; } = false;
         public int? BadgeToAwardId { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         // Foreign keys
         public int? ClientProfileId { get; set; }
         public int? PhotoShootId { get; set; }

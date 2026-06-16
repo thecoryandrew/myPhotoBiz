@@ -4,16 +4,15 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyPhotoBiz.Models;
 
 namespace MyPhotoBiz.Data
 {
-    // TODO: [HIGH-DATA] ClientProfile CASCADE delete is too aggressive - deletes all related data
-    // TODO: [HIGH-DATA] Invoice SetNull on client delete orphans invoice records
-    // TODO: [HIGH-DATA] Contract SetNull on photoshoot delete orphans contract records
-    // TODO: [HIGH] Add soft delete support (IsDeleted flag) for Client, Invoice, Contract entities
+    // ClientProfile/Contract now use soft delete (IsDeleted + query filter); the CASCADE
+    // rules below only fire on an explicit hard purge (IgnoreQueryFilters + Remove).
+    // Invoice uses status-based soft delete (Draft/Cancelled).
     // TODO: [HIGH] PhotoShoot has dual photographer FKs (PhotographerId string + PhotographerProfileId int) - consolidate
-    // TODO: [MEDIUM] Add missing indexes: GalleryAccess.ExpiryDate, Photo.ClientProfileId
     // TODO: [MEDIUM] Add unique constraint on ClientProfile email
     // TODO: [MEDIUM] Add CreatedBy/UpdatedBy audit fields to key entities
     // TODO: [FEATURE] Add Payment model for tracking payment history
@@ -83,10 +82,24 @@ namespace MyPhotoBiz.Data
             ConfigureGalleryAccessRelationships(modelBuilder);
             ConfigureContractRelationships(modelBuilder);
             ConfigureBadgeRelationships(modelBuilder);
-            ConfigureDecimalConversions(modelBuilder);
             ConfigureIndexes(modelBuilder);
             ConfigureBookingRelationships(modelBuilder);
             ConfigurePackageRelationships(modelBuilder);
+        }
+
+        // SQLite has no native decimal type. Storing every decimal as integer hundredths
+        // keeps money exact and lets SUM/ORDER BY run in the database.
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<decimal>().HaveConversion<DecimalToHundredthsConverter>();
+        }
+
+        private sealed class DecimalToHundredthsConverter : ValueConverter<decimal, long>
+        {
+            public DecimalToHundredthsConverter()
+                : base(v => (long)Math.Round(v * 100m, MidpointRounding.AwayFromZero), v => v / 100m)
+            {
+            }
         }
 
         /// <summary>
@@ -123,6 +136,10 @@ namespace MyPhotoBiz.Data
                 .HasIndex(cp => cp.UserId)
                 .IsUnique()
                 .HasDatabaseName("IX_ClientProfile_UserId");
+
+            // Soft delete: hide deleted clients from all queries (use IgnoreQueryFilters to include).
+            modelBuilder.Entity<ClientProfile>()
+                .HasQueryFilter(cp => !cp.IsDeleted);
 
             // PhotographerProfile 1:1 with ApplicationUser
             modelBuilder.Entity<PhotographerProfile>()
@@ -280,6 +297,10 @@ namespace MyPhotoBiz.Data
                 .WithMany()
                 .HasForeignKey(c => c.BadgeToAwardId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Soft delete: hide deleted contracts from all queries (use IgnoreQueryFilters to include).
+            modelBuilder.Entity<Contract>()
+                .HasQueryFilter(c => !c.IsDeleted);
         }
 
         /// <summary>
@@ -388,41 +409,6 @@ namespace MyPhotoBiz.Data
         }
 
         /// <summary>
-        /// Configure decimal to double conversion for SQLite compatibility
-        /// </summary>
-        private void ConfigureDecimalConversions(ModelBuilder modelBuilder)
-        {
-            // Invoice properties
-            modelBuilder.Entity<Invoice>()
-                .Property(i => i.Amount)
-                .HasConversion<double>();
-
-            modelBuilder.Entity<Invoice>()
-                .Property(i => i.Tax)
-                .HasConversion<double>();
-
-            // InvoiceItem properties
-            modelBuilder.Entity<InvoiceItem>()
-                .Property(ii => ii.UnitPrice)
-                .HasConversion<double>();
-
-            // PrintPricing properties
-            modelBuilder.Entity<PrintPricing>()
-                .Property(pp => pp.Price)
-                .HasConversion<double>();
-
-            // PrintItem properties
-            modelBuilder.Entity<PrintItem>()
-                .Property(pi => pi.UnitPrice)
-                .HasConversion<double>();
-
-            // PrintOrder properties
-            modelBuilder.Entity<PrintOrder>()
-                .Property(po => po.TotalPrice)
-                .HasConversion<double>();
-        }
-
-        /// <summary>
         /// Configure indexes for query performance
         /// </summary>
         private void ConfigureIndexes(ModelBuilder modelBuilder)
@@ -463,6 +449,15 @@ namespace MyPhotoBiz.Data
             modelBuilder.Entity<Photo>()
                 .HasIndex(p => p.DisplayOrder)
                 .HasDatabaseName("IX_Photo_DisplayOrder");
+
+            modelBuilder.Entity<Photo>()
+                .HasIndex(p => p.ClientProfileId)
+                .HasDatabaseName("IX_Photo_ClientProfileId");
+
+            // GalleryAccess expiry lookups
+            modelBuilder.Entity<GalleryAccess>()
+                .HasIndex(ga => ga.ExpiryDate)
+                .HasDatabaseName("IX_GalleryAccess_ExpiryDate");
 
             // PrintOrder indexes
             modelBuilder.Entity<PrintOrder>()
@@ -520,8 +515,8 @@ namespace MyPhotoBiz.Data
                 .HasDatabaseName("IX_Activity_EntityType");
 
             modelBuilder.Entity<Activity>()
-                .HasIndex(a => a.UserId)
-                .HasDatabaseName("IX_Activity_UserId");
+                .HasIndex(a => new { a.UserId, a.CreatedAt })
+                .HasDatabaseName("IX_Activity_UserId_CreatedAt");
         }
 
         /// <summary>
@@ -588,15 +583,6 @@ namespace MyPhotoBiz.Data
             modelBuilder.Entity<PhotographerAvailability>()
                 .HasIndex(pa => new { pa.PhotographerProfileId, pa.StartTime })
                 .HasDatabaseName("IX_PhotographerAvailability_Photographer_StartTime");
-
-            // Decimal conversions for SQLite
-            modelBuilder.Entity<BookingRequest>()
-                .Property(br => br.EstimatedPrice)
-                .HasConversion<double>();
-
-            modelBuilder.Entity<BookingRequest>()
-                .Property(br => br.EstimatedDurationHours)
-                .HasConversion<double>();
         }
 
         /// <summary>
@@ -627,23 +613,6 @@ namespace MyPhotoBiz.Data
             modelBuilder.Entity<PackageAddOn>()
                 .HasIndex(pa => pa.IsStandalone)
                 .HasDatabaseName("IX_PackageAddOn_IsStandalone");
-
-            // Decimal conversions for SQLite
-            modelBuilder.Entity<ServicePackage>()
-                .Property(sp => sp.BasePrice)
-                .HasConversion<double>();
-
-            modelBuilder.Entity<ServicePackage>()
-                .Property(sp => sp.DiscountedPrice)
-                .HasConversion<double>();
-
-            modelBuilder.Entity<ServicePackage>()
-                .Property(sp => sp.DurationHours)
-                .HasConversion<double>();
-
-            modelBuilder.Entity<PackageAddOn>()
-                .Property(pa => pa.Price)
-                .HasConversion<double>();
         }
     }
 }

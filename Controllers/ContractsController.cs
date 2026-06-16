@@ -298,7 +298,7 @@ namespace MyPhotoBiz.Controllers
                     }
                 }
 
-                _context.Contracts.Remove(contract);
+                contract.IsDeleted = true;
                 await _context.SaveChangesAsync();
 
                 TempData["Success"] = "Contract deleted successfully!";

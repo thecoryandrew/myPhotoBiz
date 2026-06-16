@@ -39,29 +39,20 @@ namespace MyPhotoBiz.Services
                 .Where(p => p.Status == PhotoShootStatus.Scheduled)
                 .CountAsync();
 
-        public async Task<decimal> GetTotalRevenueAsync()
-        {
-            var amounts = await _context.Invoices
+        public async Task<decimal> GetTotalRevenueAsync() =>
+            await _context.Invoices
                 .Where(i => i.Status == InvoiceStatus.Paid)
-                .Select(i => i.Amount + i.Tax)
-                .ToListAsync();
+                .SumAsync(i => i.Amount + i.Tax);
 
-            return amounts.Sum();
-        }
-
-        public async Task<decimal> GetOutstandingInvoicesAsync()
-        {
-            var amounts = await _context.Invoices
+        public async Task<decimal> GetOutstandingInvoicesAsync() =>
+            await _context.Invoices
                 .Where(i => i.Status == InvoiceStatus.Pending || i.Status == InvoiceStatus.Overdue)
-                .Select(i => i.Amount + i.Tax)
-                .ToListAsync();
-
-            return amounts.Sum();
-        }
+                .SumAsync(i => i.Amount + i.Tax);
 
         public async Task<IEnumerable<Invoice>> GetRecentInvoicesAsync(int count = 5)
         {
             return await _context.Invoices
+                .AsNoTracking()
                 .Include(i => i.ClientProfile)
                 .Include(i => i.PhotoShoot)
                 .OrderByDescending(i => i.InvoiceDate)
@@ -72,6 +63,7 @@ namespace MyPhotoBiz.Services
         public async Task<IEnumerable<PhotoShoot>> GetUpcomingPhotoShootsAsync(int count = 5)
         {
             return await _context.PhotoShoots
+                .AsNoTracking()
                 .Include(p => p.ClientProfile)
                 .Where(p => p.ScheduledDate >= DateTime.Today)
                 .OrderBy(p => p.ScheduledDate)
@@ -92,27 +84,26 @@ namespace MyPhotoBiz.Services
             var upcomingPhotoShoots = await GetUpcomingPhotoShootsAsync(5);
             var recentInvoices = await GetRecentInvoicesAsync(5);
             var recentClients = await _context.ClientProfiles
+                .AsNoTracking()
                 .Include(c => c.User)
                 .OrderByDescending(c => c.Id)
                 .Take(5)
                 .ToListAsync();
 
-            // Calculate monthly revenue (last 12 months)
+            // Monthly revenue for the last 12 months, aggregated in a single grouped query.
+            var windowStart = new DateTime(DateTime.Now.AddMonths(-11).Year, DateTime.Now.AddMonths(-11).Month, 1);
+            var revenueByMonth = await _context.Invoices
+                .Where(inv => inv.Status == InvoiceStatus.Paid && inv.InvoiceDate >= windowStart)
+                .GroupBy(inv => new { inv.InvoiceDate.Year, inv.InvoiceDate.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(inv => inv.Amount + inv.Tax) })
+                .ToDictionaryAsync(x => (x.Year, x.Month), x => x.Total);
+
             var monthlyRevenue = new Dictionary<string, decimal>();
             for (int i = 11; i >= 0; i--)
             {
                 var month = DateTime.Now.AddMonths(-i);
-                var monthKey = month.ToString("MMM yyyy");
-                
-                // Sum on client side because SQLite provider doesn't support SUM on decimal expressions
-                var monthValues = await _context.Invoices
-                    .Where(inv => inv.InvoiceDate.Month == month.Month &&
-                                  inv.InvoiceDate.Year == month.Year &&
-                                  inv.Status == InvoiceStatus.Paid)
-                    .Select(inv => inv.Amount + inv.Tax)
-                    .ToListAsync();
-                
-                monthlyRevenue[monthKey] = monthValues.Sum();
+                revenueByMonth.TryGetValue((month.Year, month.Month), out var total);
+                monthlyRevenue[month.ToString("MMM yyyy")] = total;
             }
 
             // Calculate photoshoot status data for charts

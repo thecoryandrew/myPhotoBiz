@@ -24,6 +24,8 @@ namespace MyPhotoBiz.Models
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
 
+        public bool IsDeleted { get; set; }
+
         // Navigation properties (relationships migrated from Client)
         public virtual ICollection<PhotoShoot> PhotoShoots { get; set; } = new List<PhotoShoot>();
         public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();

@@ -154,7 +154,8 @@ namespace MyPhotoBiz.Services
                     return false;
                 }
 
-                _context.ClientProfiles.Remove(clientProfile);
+                clientProfile.IsDeleted = true;
+                clientProfile.UpdatedDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Successfully deleted client profile with ID: {ClientId}", id);
                 return true;
