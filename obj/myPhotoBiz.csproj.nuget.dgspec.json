@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/myPhotoBiz.csproj": {}
+    "/home/user/myPhotoBiz/myPhotoBiz.csproj": {}
   },
   "projects": {
-    "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/myPhotoBiz.csproj": {
+    "/home/user/myPhotoBiz/myPhotoBiz.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/myPhotoBiz.csproj",
+        "projectUniqueName": "/home/user/myPhotoBiz/myPhotoBiz.csproj",
         "projectName": "myPhotoBiz",
-        "projectPath": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/myPhotoBiz.csproj",
-        "packagesPath": "/home/administrator/.nuget/packages/",
-        "outputPath": "/media/administrator/External/Solutions/myPhotoBiz/myPhotoBiz/obj/",
+        "projectPath": "/home/user/myPhotoBiz/myPhotoBiz.csproj",
+        "packagesPath": "/root/.nuget/packages/",
+        "outputPath": "/home/user/myPhotoBiz/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/administrator/.nuget/NuGet/NuGet.Config"
+          "/root/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -32,6 +32,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -118,7 +123,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
